@@ -247,16 +247,63 @@
         els.archiveBtn.textContent = "Archive";
     }
 
+    // --- Hash routing ---
+    function pushHash() {
+        var h = state.gameMode;
+        if (state.month) {
+            h += "/" + state.month;
+        }
+        history.replaceState(null, "", "#" + h);
+    }
+
+    function syncUI() {
+        // Game mode toggles
+        var modeBtns = els.modeToggle.querySelectorAll(".toggle-btn");
+        for (var i = 0; i < modeBtns.length; i++) {
+            modeBtns[i].classList.toggle("active", modeBtns[i].getAttribute("data-value") === state.gameMode);
+        }
+
+        // Period toggles + archive label
+        if (state.month === "") {
+            setActiveToggle("all");
+            resetArchiveLabel();
+        } else if (state.month === "current") {
+            setActiveToggle("month");
+            resetArchiveLabel();
+        } else {
+            setActiveToggle("archive");
+            var parts = state.month.split("-");
+            els.archiveBtn.textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
+        }
+    }
+
+    function applyHash() {
+        var hash = location.hash.replace(/^#/, "");
+        if (!hash) {
+            state.gameMode = "author";
+            state.month = "";
+        } else {
+            var segments = hash.split("/");
+            var mode = segments[0];
+            if (mode === "author" || mode === "gold") {
+                state.gameMode = mode;
+            } else {
+                state.gameMode = "author";
+            }
+            state.month = segments[1] || "";
+        }
+        syncUI();
+        closeArchiveDropdown();
+        fetchLeaderboard();
+    }
+
     // Event listeners
     els.modeToggle.addEventListener("click", function (e) {
         if (e.target.classList.contains("toggle-btn") && !e.target.classList.contains("active")) {
-            var buttons = els.modeToggle.querySelectorAll(".toggle-btn");
-            for (var i = 0; i < buttons.length; i++) {
-                buttons[i].classList.remove("active");
-            }
-            e.target.classList.add("active");
             state.gameMode = e.target.getAttribute("data-value");
             closeArchiveDropdown();
+            pushHash();
+            syncUI();
             fetchLeaderboard();
         }
     });
@@ -283,8 +330,8 @@
             state.month = "current";
         }
 
-        setActiveToggle(value);
-        resetArchiveLabel();
+        pushHash();
+        syncUI();
         fetchLeaderboard();
     });
 
@@ -292,16 +339,10 @@
         var btn = e.target.closest("button");
         if (!btn) return;
 
-        var monthKey = btn.getAttribute("data-month");
-        state.month = monthKey;
-
-        // Parse label from the month key
-        var parts = monthKey.split("-");
-        var label = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
-        els.archiveBtn.textContent = label;
-
-        setActiveToggle("archive");
+        state.month = btn.getAttribute("data-month");
         closeArchiveDropdown();
+        pushHash();
+        syncUI();
         updateArchiveSelection();
         fetchLeaderboard();
     });
@@ -312,7 +353,9 @@
         }
     });
 
+    window.addEventListener("hashchange", applyHash);
+
     // Init
     populateArchiveDropdown();
-    fetchLeaderboard();
+    applyHash();
 })();
