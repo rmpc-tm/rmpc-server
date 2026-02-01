@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "rewrites": [
+    { "source": "/rmpc/:path*", "destination": "/:path*" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

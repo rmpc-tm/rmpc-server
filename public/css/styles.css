@@ -300,7 +300,7 @@ main {
 
 .toggle-group {
     display: flex;
-    gap: 2px;
+    gap: 0;
     border: none;
     border-radius: 0;
     overflow: visible;
@@ -310,7 +310,7 @@ main {
 .toggle-btn {
     padding: 0.3rem 0.85rem;
     border: 1px solid var(--border-strong);
-    border-radius: 3px;
+    border-radius: 0;
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
@@ -320,10 +320,16 @@ main {
     letter-spacing: 0.02em;
     transition: all 0.12s ease;
     position: relative;
+    margin-left: -1px;
 }
 
-.toggle-btn:not(:last-child) {
-    border-right: 1px solid var(--border-strong);
+.toggle-btn:first-child {
+    margin-left: 0;
+    border-radius: 3px 0 0 3px;
+}
+
+.toggle-btn:last-child {
+    border-radius: 0 3px 3px 0;
 }
 
 .toggle-btn.active {
@@ -331,11 +337,13 @@ main {
     color: var(--toggle-active-text);
     border-color: var(--toggle-active-bg);
     text-shadow: none;
+    z-index: 1;
 }
 
 .toggle-btn:hover:not(.active) {
     border-color: var(--accent);
     color: var(--text);
+    z-index: 1;
 }
 
 /* ---------- Table ---------- */
