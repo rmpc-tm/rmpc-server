@@ -9,7 +9,16 @@ import (
 	handler "rmpc-server/api"
 )
 
-const DevOpenplanetToken = "dev-token"
+var devPlayers = map[string]struct {
+	AccountID   string
+	DisplayName string
+}{
+	"token-alice":   {"op-alice2-001", "AlicE"},
+	"token-bob":     {"op-bob2-002", "Boob"},
+	"token-charlie": {"op-charlie2-003", "Charlie New"},
+	"token-diana":   {"op-diana2-004", "Diana The Destroyer"},
+	"token-eve":     {"op-eve2-005", "Evelyn"},
+}
 
 func main() {
 	// Start mock Openplanet auth server
@@ -33,7 +42,10 @@ func main() {
 	}
 
 	slog.Info("listening", "addr", addr)
-	slog.Info("mock openplanet", "addr", mockAddr, "valid_token", DevOpenplanetToken)
+	slog.Info("mock openplanet", "addr", mockAddr)
+	for token, p := range devPlayers {
+		slog.Info("dev player", "token", token, "name", p.DisplayName)
+	}
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		slog.Error("server error", "error", err)
 		os.Exit(1)
@@ -65,7 +77,8 @@ func handleMockValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Token != DevOpenplanetToken {
+	player, ok := devPlayers[req.Token]
+	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid token"})
 		return
@@ -73,7 +86,7 @@ func handleMockValidate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"account_id":   "dev-player-001",
-		"display_name": "DevPlayer",
+		"account_id":   player.AccountID,
+		"display_name": player.DisplayName,
 	})
 }

@@ -6,6 +6,7 @@ import (
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/google/uuid"
 
+	"rmpc-server/db/.gen/rmpc/public/model"
 	"rmpc-server/db/.gen/rmpc/public/table"
 )
 
@@ -23,9 +24,7 @@ func UpsertPlayer(db *sql.DB, openplanetID, displayName string) (uuid.UUID, erro
 		),
 	).RETURNING(table.Players.ID)
 
-	var dest struct {
-		ID uuid.UUID
-	}
+	var dest model.Players
 	err := stmt.Query(db, &dest)
 	return dest.ID, err
 }

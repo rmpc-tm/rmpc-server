@@ -22,8 +22,8 @@ type leaderboardResponse struct {
 }
 
 type leaderboardPlayerJSON struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"display_name"`
+	OpenplanetID string `json:"openplanet_id"`
+	DisplayName  string `json:"display_name"`
 }
 
 type leaderboardEntryJSON struct {
@@ -97,8 +97,8 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 		scores[i] = leaderboardEntryJSON{
 			Rank: e.Rank,
 			Player: leaderboardPlayerJSON{
-				ID:          e.PlayerID.String(),
-				DisplayName: e.DisplayName,
+				OpenplanetID: e.OpenplanetID,
+				DisplayName:  e.DisplayName,
 			},
 			Score:         e.Score,
 			MapsCompleted: e.MapsCompleted,

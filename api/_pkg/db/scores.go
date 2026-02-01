@@ -7,6 +7,7 @@ import (
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/google/uuid"
 
+	"rmpc-server/db/.gen/rmpc/public/model"
 	"rmpc-server/db/.gen/rmpc/public/table"
 )
 
@@ -42,10 +43,7 @@ func InsertScore(db *sql.DB, input ScoreInput) (uuid.UUID, time.Time, error) {
 		table.Scores.CreatedAt,
 	)
 
-	var dest struct {
-		ID        uuid.UUID
-		CreatedAt *time.Time
-	}
+	var dest model.Scores
 	err := stmt.Query(db, &dest)
 	if err != nil {
 		return uuid.Nil, time.Time{}, err
@@ -64,9 +62,9 @@ func CanSubmitScore(db *sql.DB, playerID uuid.UUID, cooldown time.Duration) (boo
 	).FROM(
 		table.Scores,
 	).WHERE(
-		table.Scores.PlayerID.EQ(String(playerID.String())).
+		table.Scores.PlayerID.EQ(UUID(playerID)).
 			AND(table.Scores.CreatedAt.GT(
-				TimestampzExpression(RawTimestampz("NOW() - INTERVAL '#1 seconds'", RawArgs{"#1": int(cooldown.Seconds())})),
+				TimestampzExpression(NOW().SUB(INTERVALd(cooldown))),
 			)),
 	)
 
@@ -86,7 +84,7 @@ func IsPlayerBanned(db *sql.DB, playerID uuid.UUID) (bool, error) {
 	).FROM(
 		table.BannedPlayers,
 	).WHERE(
-		table.BannedPlayers.PlayerID.EQ(String(playerID.String())),
+		table.BannedPlayers.PlayerID.EQ(UUID(playerID)),
 	)
 
 	var dest struct {

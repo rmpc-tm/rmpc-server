@@ -14,6 +14,7 @@ import (
 type LeaderboardEntry struct {
 	Rank          int            `sql:"-"`
 	PlayerID      uuid.UUID      `alias:"scores.player_id"`
+	OpenplanetID  string         `alias:"players.openplanet_id"`
 	DisplayName   string         `alias:"players.display_name"`
 	Score         int32          `alias:"scores.score"`
 	MapsCompleted int32          `alias:"scores.maps_completed"`
@@ -47,6 +48,7 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 		table.Scores.DurationMs,
 		table.Scores.GameMode,
 		table.Scores.CreatedAt,
+		table.Players.OpenplanetID,
 		table.Players.DisplayName,
 	).DISTINCT(
 		table.Scores.PlayerID,
@@ -63,6 +65,7 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 
 	// Columns from the CTE
 	bsPlayerID := table.Scores.PlayerID.From(bestScores)
+	bsOpenplanetID := table.Players.OpenplanetID.From(bestScores)
 	bsDisplayName := table.Players.DisplayName.From(bestScores)
 	bsScore := table.Scores.Score.From(bestScores)
 	bsMapsCompleted := table.Scores.MapsCompleted.From(bestScores)
@@ -73,6 +76,7 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 
 	stmt := SELECT(
 		bsPlayerID,
+		bsOpenplanetID,
 		bsDisplayName,
 		bsScore,
 		bsMapsCompleted,
