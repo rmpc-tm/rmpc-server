@@ -6,6 +6,8 @@
         period: "all"
     };
 
+    var cache = {};
+
     var els = {
         body: document.getElementById("leaderboard-body"),
         loading: document.getElementById("loading"),
@@ -61,6 +63,13 @@
     }
 
     function fetchLeaderboard() {
+        var key = state.gameMode + ":" + state.period;
+
+        if (cache[key]) {
+            render(cache[key]);
+            return;
+        }
+
         showLoading();
 
         var params = new URLSearchParams();
@@ -75,6 +84,7 @@
                 return res.json();
             })
             .then(function (data) {
+                cache[key] = data;
                 render(data);
             })
             .catch(function (err) {

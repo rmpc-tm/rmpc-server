@@ -271,6 +271,55 @@ main {
     padding: 1rem 1.25rem 2.5rem;
 }
 
+/* ---------- About blurb ---------- */
+.about-blurb {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+}
+
+.about-blurb summary {
+    padding: 0.45rem 0.7rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.about-blurb summary:hover {
+    color: var(--text);
+}
+
+.about-blurb summary::marker {
+    color: var(--accent);
+}
+
+.about-blurb p {
+    padding: 0 0.7rem 0.55rem;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.about-blurb p:first-of-type {
+    padding-top: 0.15rem;
+}
+
+.about-blurb a {
+    color: var(--link);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+    transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.about-blurb a:hover {
+    color: var(--link-hover);
+    border-color: var(--link-hover);
+}
+
 /* ---------- Controls ---------- */
 .controls {
     display: flex;
