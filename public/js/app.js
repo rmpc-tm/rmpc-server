@@ -156,19 +156,19 @@
     }
 
     themeToggle.addEventListener("click", function () {
-        var current = localStorage.getItem("theme") || "system";
+        var current = localStorage.getItem("theme") || "dark";
         var next = themeCycle[(themeCycle.indexOf(current) + 1) % themeCycle.length];
         localStorage.setItem("theme", next);
         applyTheme(next);
     });
 
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
-        if ((localStorage.getItem("theme") || "system") === "system") {
+        if ((localStorage.getItem("theme") || "dark") === "system") {
             applyTheme("system");
         }
     });
 
-    applyTheme(localStorage.getItem("theme") || "system");
+    applyTheme(localStorage.getItem("theme") || "dark");
 
     // Event listeners
     els.modeToggle.addEventListener("click", function (e) {
