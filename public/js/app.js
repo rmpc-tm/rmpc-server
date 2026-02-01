@@ -67,7 +67,7 @@
         params.set("game_mode", state.gameMode);
         params.set("period", state.period);
 
-        fetch("/api/leaderboard?" + params.toString())
+        fetch("api/leaderboard?" + params.toString())
             .then(function (res) {
                 if (!res.ok) {
                     throw new Error("request");
