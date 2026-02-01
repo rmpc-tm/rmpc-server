@@ -34,6 +34,7 @@ type LeaderboardEntry struct {
 type LeaderboardParams struct {
 	GameMode  string
 	StartTime *time.Time
+	EndTime   *time.Time
 }
 
 func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, error) {
@@ -48,6 +49,9 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 	}
 	if params.StartTime != nil {
 		condition = condition.AND(table.Scores.CreatedAt.GT_EQ(TimestampzT(*params.StartTime)))
+	}
+	if params.EndTime != nil {
+		condition = condition.AND(table.Scores.CreatedAt.LT(TimestampzT(*params.EndTime)))
 	}
 
 	// Best score per player using DISTINCT ON

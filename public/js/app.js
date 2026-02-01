@@ -1,9 +1,10 @@
 (function () {
     "use strict";
 
+    // month: "" = all time, "current" = this month, "YYYY-MM" = specific archive month
     var state = {
         gameMode: "author",
-        period: "all"
+        month: ""
     };
 
     var cache = {};
@@ -15,7 +16,9 @@
         table: document.getElementById("leaderboard"),
         empty: document.getElementById("empty-state"),
         periodToggle: document.getElementById("period-toggle"),
-        modeToggle: document.getElementById("game-mode-toggle")
+        modeToggle: document.getElementById("game-mode-toggle"),
+        archiveBtn: document.getElementById("archive-btn"),
+        archiveDropdown: document.getElementById("archive-dropdown")
     };
 
     function formatScore(ms) {
@@ -62,8 +65,69 @@
         els.error.textContent = msg;
     }
 
+    function getCurrentMonth() {
+        var now = new Date();
+        var y = now.getUTCFullYear();
+        var m = now.getUTCMonth() + 1;
+        return y + "-" + (m < 10 ? "0" + m : "" + m);
+    }
+
+    var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    function formatMonthLabel(y, m) {
+        return MONTH_NAMES[m - 1] + " " + y;
+    }
+
+    function generateArchiveMonths() {
+        var months = [];
+        var now = new Date();
+        var curY = now.getUTCFullYear();
+        var curM = now.getUTCMonth() + 1;
+        // Go back from previous month to Dec 2025
+        var y = curY;
+        var m = curM - 1;
+        if (m === 0) { m = 12; y--; }
+        while (y > 2025 || (y === 2025 && m >= 12)) {
+            var key = y + "-" + (m < 10 ? "0" + m : "" + m);
+            months.push({ key: key, label: formatMonthLabel(y, m) });
+            m--;
+            if (m === 0) { m = 12; y--; }
+        }
+        return months;
+    }
+
+    function populateArchiveDropdown() {
+        var months = generateArchiveMonths();
+        els.archiveDropdown.innerHTML = "";
+        for (var i = 0; i < months.length; i++) {
+            var btn = document.createElement("button");
+            btn.setAttribute("data-month", months[i].key);
+            btn.textContent = months[i].label;
+            els.archiveDropdown.appendChild(btn);
+        }
+    }
+
+    function resolveMonth() {
+        if (state.month === "current") return getCurrentMonth();
+        return state.month;
+    }
+
+    function closeArchiveDropdown() {
+        els.archiveDropdown.classList.remove("open");
+    }
+
+    function updateArchiveSelection() {
+        var buttons = els.archiveDropdown.querySelectorAll("button");
+        var resolved = resolveMonth();
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle("selected", buttons[i].getAttribute("data-month") === resolved);
+        }
+    }
+
     function fetchLeaderboard() {
-        var key = state.gameMode + ":" + state.period;
+        var resolved = resolveMonth();
+        var key = state.gameMode + ":" + resolved;
 
         if (cache[key]) {
             render(cache[key]);
@@ -74,7 +138,9 @@
 
         var params = new URLSearchParams();
         params.set("game_mode", state.gameMode);
-        params.set("period", state.period);
+        if (resolved) {
+            params.set("month", resolved);
+        }
 
         fetch("api/leaderboard?" + params.toString())
             .then(function (res) {
@@ -170,6 +236,17 @@
 
     applyTheme(localStorage.getItem("theme") || "dark");
 
+    function setActiveToggle(value) {
+        var buttons = els.periodToggle.querySelectorAll(".toggle-btn");
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle("active", buttons[i].getAttribute("data-value") === value);
+        }
+    }
+
+    function resetArchiveLabel() {
+        els.archiveBtn.textContent = "Archive";
+    }
+
     // Event listeners
     els.modeToggle.addEventListener("click", function (e) {
         if (e.target.classList.contains("toggle-btn") && !e.target.classList.contains("active")) {
@@ -179,22 +256,63 @@
             }
             e.target.classList.add("active");
             state.gameMode = e.target.getAttribute("data-value");
+            closeArchiveDropdown();
             fetchLeaderboard();
         }
     });
 
     els.periodToggle.addEventListener("click", function (e) {
-        if (e.target.classList.contains("toggle-btn") && !e.target.classList.contains("active")) {
-            var buttons = els.periodToggle.querySelectorAll(".toggle-btn");
-            for (var i = 0; i < buttons.length; i++) {
-                buttons[i].classList.remove("active");
-            }
-            e.target.classList.add("active");
-            state.period = e.target.getAttribute("data-value");
-            fetchLeaderboard();
+        var btn = e.target.closest(".toggle-btn");
+        if (!btn) return;
+
+        var value = btn.getAttribute("data-value");
+
+        if (value === "archive") {
+            els.archiveDropdown.classList.toggle("open");
+            updateArchiveSelection();
+            return;
+        }
+
+        closeArchiveDropdown();
+
+        if (btn.classList.contains("active")) return;
+
+        if (value === "all") {
+            state.month = "";
+        } else if (value === "month") {
+            state.month = "current";
+        }
+
+        setActiveToggle(value);
+        resetArchiveLabel();
+        fetchLeaderboard();
+    });
+
+    els.archiveDropdown.addEventListener("click", function (e) {
+        var btn = e.target.closest("button");
+        if (!btn) return;
+
+        var monthKey = btn.getAttribute("data-month");
+        state.month = monthKey;
+
+        // Parse label from the month key
+        var parts = monthKey.split("-");
+        var label = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
+        els.archiveBtn.textContent = label;
+
+        setActiveToggle("archive");
+        closeArchiveDropdown();
+        updateArchiveSelection();
+        fetchLeaderboard();
+    });
+
+    document.addEventListener("click", function (e) {
+        if (!els.archiveDropdown.contains(e.target) && e.target !== els.archiveBtn) {
+            closeArchiveDropdown();
         }
     });
 
-    // Initial load
+    // Init
+    populateArchiveDropdown();
     fetchLeaderboard();
 })();
