@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS metrics;
+DROP TABLE IF EXISTS scores;
+DROP TABLE IF EXISTS banned_players;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS players;
+DROP TYPE IF EXISTS game_mode;
