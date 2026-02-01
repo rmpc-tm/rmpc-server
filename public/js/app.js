@@ -137,7 +137,7 @@
 
     // Theme toggle
     var themeToggle = document.getElementById("theme-toggle");
-    var themeCycle = ["system", "light", "dark"];
+    var themeCycle = ["dark", "light", "system"];
 
     function applyTheme(setting) {
         var resolved = setting;
