@@ -8,6 +8,7 @@
     };
 
     var cache = {};
+    var fetchGen = 0;
 
     var els = {
         body: document.getElementById("leaderboard-body"),
@@ -61,6 +62,7 @@
 
     function showError(msg) {
         els.loading.style.display = "none";
+        els.table.style.display = "none";
         els.error.style.display = "block";
         els.error.textContent = msg;
     }
@@ -136,6 +138,7 @@
 
         showLoading();
 
+        var gen = ++fetchGen;
         var params = new URLSearchParams();
         params.set("game_mode", state.gameMode);
         if (resolved) {
@@ -150,10 +153,12 @@
                 return res.json();
             })
             .then(function (data) {
+                if (gen !== fetchGen) return;
                 cache[key] = data;
                 render(data);
             })
             .catch(function (err) {
+                if (gen !== fetchGen) return;
                 if (err.message === "request") {
                     showError("Failed to load leaderboard. Please try again later.");
                 } else {
@@ -179,6 +184,7 @@
 
         els.body.innerHTML = "";
 
+        var skipCutoff = new Date("2026-02-01");
         for (var i = 0; i < scores.length; i++) {
             var s = scores[i];
             var tr = document.createElement("tr");
@@ -187,7 +193,7 @@
                 '<td class="col-rank">' + escapeHtml(String(s.rank)) + "</td>" +
                 '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(s.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(s.player.display_name) + "</a></td>" +
                 '<td class="col-maps">' + escapeHtml(String(s.maps_completed)) + "</td>" +
-                '<td class="col-skipped">' + (new Date(s.created_at) < new Date("2026-02-01") ? "" : escapeHtml(String(s.maps_skipped))) + "</td>" +
+                '<td class="col-skipped">' + (new Date(s.created_at) < skipCutoff ? "" : escapeHtml(String(s.maps_skipped))) + "</td>" +
                 '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
                 '<td class="col-date">' + escapeHtml(formatDate(s.created_at)) + "</td>";
 
@@ -195,10 +201,10 @@
         }
     }
 
+    var escapeEl = document.createElement("div");
     function escapeHtml(str) {
-        var div = document.createElement("div");
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
+        escapeEl.textContent = str;
+        return escapeEl.innerHTML;
     }
 
     // Theme toggle
