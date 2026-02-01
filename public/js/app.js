@@ -70,9 +70,7 @@
         fetch("/api/leaderboard?" + params.toString())
             .then(function (res) {
                 if (!res.ok) {
-                    return res.json().then(function (data) {
-                        throw new Error(data.error || "Failed to load leaderboard");
-                    });
+                    throw new Error("request");
                 }
                 return res.json();
             })
@@ -80,7 +78,11 @@
                 render(data);
             })
             .catch(function (err) {
-                showError(err.message || "Failed to load leaderboard");
+                if (err.message === "request") {
+                    showError("Failed to load leaderboard. Please try again later.");
+                } else {
+                    showError("Something went wrong while reading the response.");
+                }
             });
     }
 
