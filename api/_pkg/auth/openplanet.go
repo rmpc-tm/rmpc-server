@@ -8,9 +8,14 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"rmpc-server/api/_pkg/config"
 )
+
+var openplanetClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
 
 type OpenplanetUser struct {
 	AccountID   string `json:"account_id"`
@@ -36,7 +41,7 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := http.Post(
+	resp, err := openplanetClient.Post(
 		config.Env.OpenplanetAuthURL,
 		"application/json",
 		bytes.NewReader(body),
@@ -46,7 +51,7 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 	}
 	defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 64*1024)) // 64KB max
 	if err != nil {
 		return nil, fmt.Errorf("failed to read Openplanet response: %w", err)
 	}
@@ -68,12 +73,14 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 }
 
 func GetClientIP(r *http.Request) string {
+	// Prefer X-Real-Ip set by trusted reverse proxies (Vercel, nginx)
+	if realIP := r.Header.Get("X-Real-Ip"); realIP != "" {
+		return strings.TrimSpace(realIP)
+	}
+	// Fall back to rightmost X-Forwarded-For entry (appended by the proxy)
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		// Take the first IP (client IP)
-		if idx := strings.Index(xff, ","); idx != -1 {
-			return strings.TrimSpace(xff[:idx])
-		}
-		return strings.TrimSpace(xff)
+		parts := strings.Split(xff, ",")
+		return strings.TrimSpace(parts[len(parts)-1])
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

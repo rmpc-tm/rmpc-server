@@ -106,12 +106,12 @@
             var tr = document.createElement("tr");
 
             tr.innerHTML =
-                '<td class="col-rank">' + s.rank + "</td>" +
+                '<td class="col-rank">' + escapeHtml(String(s.rank)) + "</td>" +
                 '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(s.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(s.player.display_name) + "</a></td>" +
-                '<td class="col-maps">' + s.maps_completed + "</td>" +
-                '<td class="col-skipped">' + s.maps_skipped + "</td>" +
-                '<td class="col-score">' + formatScore(s.score) + "</td>" +
-                '<td class="col-date">' + formatDate(s.created_at) + "</td>";
+                '<td class="col-maps">' + escapeHtml(String(s.maps_completed)) + "</td>" +
+                '<td class="col-skipped">' + escapeHtml(String(s.maps_skipped)) + "</td>" +
+                '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
+                '<td class="col-date">' + escapeHtml(formatDate(s.created_at)) + "</td>";
 
             els.body.appendChild(tr);
         }

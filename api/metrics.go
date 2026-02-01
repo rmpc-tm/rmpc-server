@@ -30,6 +30,7 @@ func Metrics(w http.ResponseWriter, r *http.Request) {
 
 func handleMetricSubmit(w http.ResponseWriter, r *http.Request, _ uuid.UUID) {
 	// Parse request
+	r.Body = http.MaxBytesReader(w, r.Body, 4*1024) // 4KB
 	var req metricRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
@@ -42,6 +43,9 @@ func handleMetricSubmit(w http.ResponseWriter, r *http.Request, _ uuid.UUID) {
 
 	if req.Increment <= 0 {
 		req.Increment = 1
+	}
+	if req.Increment > 100 {
+		req.Increment = 100
 	}
 
 	// Check allowlist

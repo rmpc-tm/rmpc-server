@@ -63,6 +63,7 @@ func handleScoreSubmit(w http.ResponseWriter, r *http.Request, playerID uuid.UUI
 	}
 
 	// Parse request
+	r.Body = http.MaxBytesReader(w, r.Body, 512*1024) // 512KB
 	var req scoreSubmitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
