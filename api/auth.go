@@ -37,6 +37,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse request
+	r.Body = http.MaxBytesReader(w, r.Body, 4*1024) // 4KB
 	var req authRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")

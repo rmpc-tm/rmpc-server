@@ -2,14 +2,21 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/google/uuid"
 
+	"rmpc-server/db/.gen/rmpc/public/enum"
 	"rmpc-server/db/.gen/rmpc/public/model"
 	"rmpc-server/db/.gen/rmpc/public/table"
 )
+
+var gameModeExpression = map[string]StringExpression{
+	"author": enum.GameMode.Author,
+	"gold":   enum.GameMode.Gold,
+}
 
 type LeaderboardEntry struct {
 	Rank          int            `sql:"-"`
@@ -33,7 +40,11 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 	condition := table.BannedPlayers.ID.IS_NULL()
 
 	if params.GameMode != "" {
-		condition = condition.AND(table.Scores.GameMode.EQ(StringExp(RawString("'" + params.GameMode + "'::game_mode"))))
+		expr, ok := gameModeExpression[params.GameMode]
+		if !ok {
+			return nil, fmt.Errorf("invalid game mode: %s", params.GameMode)
+		}
+		condition = condition.AND(table.Scores.GameMode.EQ(expr))
 	}
 	if params.StartTime != nil {
 		condition = condition.AND(table.Scores.CreatedAt.GT_EQ(TimestampzT(*params.StartTime)))

@@ -12,6 +12,14 @@ import (
 )
 
 func CreateSession(db *sql.DB, playerID uuid.UUID, tokenHash string, expiresAt time.Time) error {
+	// Delete existing sessions for this player (one session per player)
+	delStmt := table.Sessions.DELETE().WHERE(
+		table.Sessions.PlayerID.EQ(UUID(playerID)),
+	)
+	if _, err := delStmt.Exec(db); err != nil {
+		return err
+	}
+
 	stmt := table.Sessions.INSERT(
 		table.Sessions.PlayerID,
 		table.Sessions.TokenHash,
