@@ -13,10 +13,9 @@ import (
 )
 
 type Sessions struct {
-	ID         uuid.UUID `sql:"primary_key"`
-	PlayerID   uuid.UUID
-	TokenHash  string
-	CreatedAt  *time.Time
-	ExpiresAt  time.Time
-	LastUsedAt *time.Time
+	ID        uuid.UUID `sql:"primary_key"`
+	PlayerID  uuid.UUID
+	TokenHash string
+	CreatedAt *time.Time
+	ExpiresAt time.Time
 }

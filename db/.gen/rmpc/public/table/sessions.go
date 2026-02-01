@@ -17,12 +17,11 @@ type sessionsTable struct {
 	postgres.Table
 
 	// Columns
-	ID         postgres.ColumnString
-	PlayerID   postgres.ColumnString
-	TokenHash  postgres.ColumnString
-	CreatedAt  postgres.ColumnTimestampz
-	ExpiresAt  postgres.ColumnTimestampz
-	LastUsedAt postgres.ColumnTimestampz
+	ID        postgres.ColumnString
+	PlayerID  postgres.ColumnString
+	TokenHash postgres.ColumnString
+	CreatedAt postgres.ColumnTimestampz
+	ExpiresAt postgres.ColumnTimestampz
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -64,27 +63,25 @@ func newSessionsTable(schemaName, tableName, alias string) *SessionsTable {
 
 func newSessionsTableImpl(schemaName, tableName, alias string) sessionsTable {
 	var (
-		IDColumn         = postgres.StringColumn("id")
-		PlayerIDColumn   = postgres.StringColumn("player_id")
-		TokenHashColumn  = postgres.StringColumn("token_hash")
-		CreatedAtColumn  = postgres.TimestampzColumn("created_at")
-		ExpiresAtColumn  = postgres.TimestampzColumn("expires_at")
-		LastUsedAtColumn = postgres.TimestampzColumn("last_used_at")
-		allColumns       = postgres.ColumnList{IDColumn, PlayerIDColumn, TokenHashColumn, CreatedAtColumn, ExpiresAtColumn, LastUsedAtColumn}
-		mutableColumns   = postgres.ColumnList{PlayerIDColumn, TokenHashColumn, CreatedAtColumn, ExpiresAtColumn, LastUsedAtColumn}
-		defaultColumns   = postgres.ColumnList{IDColumn, CreatedAtColumn, LastUsedAtColumn}
+		IDColumn        = postgres.StringColumn("id")
+		PlayerIDColumn  = postgres.StringColumn("player_id")
+		TokenHashColumn = postgres.StringColumn("token_hash")
+		CreatedAtColumn = postgres.TimestampzColumn("created_at")
+		ExpiresAtColumn = postgres.TimestampzColumn("expires_at")
+		allColumns      = postgres.ColumnList{IDColumn, PlayerIDColumn, TokenHashColumn, CreatedAtColumn, ExpiresAtColumn}
+		mutableColumns  = postgres.ColumnList{PlayerIDColumn, TokenHashColumn, CreatedAtColumn, ExpiresAtColumn}
+		defaultColumns  = postgres.ColumnList{IDColumn, CreatedAtColumn}
 	)
 
 	return sessionsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:         IDColumn,
-		PlayerID:   PlayerIDColumn,
-		TokenHash:  TokenHashColumn,
-		CreatedAt:  CreatedAtColumn,
-		ExpiresAt:  ExpiresAtColumn,
-		LastUsedAt: LastUsedAtColumn,
+		ID:        IDColumn,
+		PlayerID:  PlayerIDColumn,
+		TokenHash: TokenHashColumn,
+		CreatedAt: CreatedAtColumn,
+		ExpiresAt: ExpiresAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

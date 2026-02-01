@@ -37,7 +37,7 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 	}
 
 	resp, err := http.Post(
-		"https://openplanet.dev/api/auth/validate",
+		config.Env.OpenplanetAuthURL,
 		"application/json",
 		bytes.NewReader(body),
 	)

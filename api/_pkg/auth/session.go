@@ -5,7 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -16,13 +18,19 @@ import (
 	"rmpc-server/api/_pkg/response"
 )
 
+var errInternal = errors.New("internal error")
+
 type AuthenticatedHandler func(w http.ResponseWriter, r *http.Request, playerID uuid.UUID)
 
 func RequireAuth(next AuthenticatedHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		playerID, err := AuthenticateRequest(r)
 		if err != nil {
-			response.Error(w, http.StatusUnauthorized, "unauthorized: "+err.Error())
+			if errors.Is(err, errInternal) {
+				response.Error(w, http.StatusServiceUnavailable, "service unavailable")
+			} else {
+				response.Error(w, http.StatusUnauthorized, "unauthorized")
+			}
 			return
 		}
 		next(w, r, playerID)
@@ -63,12 +71,14 @@ func AuthenticateRequest(r *http.Request) (uuid.UUID, error) {
 
 	database, err := db.GetDB()
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("database error: %w", err)
+		slog.Error("database connection error", "error", err)
+		return uuid.Nil, errInternal
 	}
 
 	session, err := db.FindSessionByTokenHash(database, tokenHash)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("session lookup error: %w", err)
+		slog.Error("session lookup error", "error", err)
+		return uuid.Nil, errInternal
 	}
 	if session == nil {
 		return uuid.Nil, fmt.Errorf("invalid session token")

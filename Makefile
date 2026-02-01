@@ -6,7 +6,7 @@ DB_NAME      = rmpc
 LOCAL_DSN    = postgresql://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
 DB_DSN  ?= $(DATABASE_URL)
-JET_DSN ?= $(DB_DSN)
+JET_DSN ?= $(or $(DB_DSN),$(LOCAL_DSN))
 JET_BIN  = $(shell go env GOPATH)/bin/jet
 LINT_BIN = $(shell go env GOPATH)/bin/golangci-lint
 
@@ -29,8 +29,7 @@ lint: $(LINT_BIN) ## Run golangci-lint
 $(LINT_BIN):
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-generate: $(JET_BIN) ## Generate go-jet types from database (requires JET_DSN or DATABASE_URL)
-	@test -n "$(JET_DSN)" || { echo "Set DATABASE_URL or JET_DSN"; exit 1; }
+generate: $(JET_BIN) ## Generate go-jet types from database (defaults to local Docker DB)
 	$(JET_BIN) -dsn="$(JET_DSN)" -schema=public -path=./db/.gen
 
 $(JET_BIN):
@@ -72,8 +71,11 @@ db-reset: db-stop db-start ## Recreate local DB and run migrations
 	@docker cp db/migrations/001_initial.up.sql $(DB_CONTAINER):/tmp/migration.sql
 	@docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -f /tmp/migration.sql
 
-dev: ## Run locally with Vercel CLI
-	vercel dev
+dev: ## Run local dev server with mock Openplanet auth
+	DATABASE_URL=$(LOCAL_DSN) \
+	OPENPLANET_PLUGIN_SECRET=dev-secret \
+	OPENPLANET_AUTH_URL=http://localhost:8081/api/auth/validate \
+	go run ./cmd/dev
 
 clean: ## Remove build artifacts
 	go clean ./...

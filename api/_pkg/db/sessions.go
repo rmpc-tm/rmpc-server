@@ -26,9 +26,17 @@ func CreateSession(db *sql.DB, playerID uuid.UUID, tokenHash string, expiresAt t
 	return err
 }
 
-func FindSessionByTokenHash(db *sql.DB, tokenHash string) (*model.Sessions, error) {
+type Session struct {
+	ID        uuid.UUID
+	PlayerID  uuid.UUID
+	ExpiresAt time.Time
+}
+
+func FindSessionByTokenHash(db *sql.DB, tokenHash string) (*Session, error) {
 	stmt := SELECT(
-		table.Sessions.AllColumns,
+		table.Sessions.ID,
+		table.Sessions.PlayerID,
+		table.Sessions.ExpiresAt,
 	).FROM(
 		table.Sessions,
 	).WHERE(
@@ -43,5 +51,9 @@ func FindSessionByTokenHash(db *sql.DB, tokenHash string) (*model.Sessions, erro
 		}
 		return nil, err
 	}
-	return &dest, nil
+	return &Session{
+		ID:        dest.ID,
+		PlayerID:  dest.PlayerID,
+		ExpiresAt: dest.ExpiresAt,
+	}, nil
 }
