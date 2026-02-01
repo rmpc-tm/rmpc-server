@@ -12,12 +12,12 @@ import (
 
 type leaderboardQuery struct {
 	GameMode string `json:"game_mode" validate:"omitempty,oneof=author gold"`
-	Period   string `json:"period"    validate:"oneof=all year month past_month"`
+	Month    string `json:"month"     validate:"omitempty"`
 }
 
 type leaderboardResponse struct {
 	Scores   []leaderboardEntryJSON `json:"scores"`
-	Period   string                 `json:"period"`
+	Month    string                 `json:"month,omitempty"`
 	GameMode string                 `json:"game_mode"`
 }
 
@@ -47,10 +47,7 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 
 	query := leaderboardQuery{
 		GameMode: q.Get("game_mode"),
-		Period:   q.Get("period"),
-	}
-	if query.Period == "" {
-		query.Period = "all"
+		Month:    q.Get("month"),
 	}
 	if err := validate.Struct(query); err != nil {
 		response.Error(w, http.StatusBadRequest, validate.FormatError(err))
@@ -58,17 +55,16 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var startTime *time.Time
-	now := time.Now()
-	switch query.Period {
-	case "year":
-		t := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+	var endTime *time.Time
+	if query.Month != "" {
+		t, err := time.Parse("2006-01", query.Month)
+		if err != nil {
+			response.Error(w, http.StatusBadRequest, "invalid month format, expected YYYY-MM")
+			return
+		}
+		end := t.AddDate(0, 1, 0)
 		startTime = &t
-	case "month":
-		t := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-		startTime = &t
-	case "past_month":
-		t := now.AddDate(0, -1, 0)
-		startTime = &t
+		endTime = &end
 	}
 
 	database, err := db.GetDB()
@@ -81,6 +77,7 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 	entries, err := db.GetLeaderboard(database, db.LeaderboardParams{
 		GameMode:  query.GameMode,
 		StartTime: startTime,
+		EndTime:   endTime,
 	})
 	if err != nil {
 		slog.Error("leaderboard query error", "error", err)
@@ -116,7 +113,7 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, leaderboardResponse{
 		Scores:   scores,
-		Period:   query.Period,
+		Month:    query.Month,
 		GameMode: gameModeResp,
 	})
 }
