@@ -8,6 +8,7 @@
     };
 
     var cache = {};
+    var fetchGen = 0;
 
     var els = {
         body: document.getElementById("leaderboard-body"),
@@ -61,6 +62,7 @@
 
     function showError(msg) {
         els.loading.style.display = "none";
+        els.table.style.display = "none";
         els.error.style.display = "block";
         els.error.textContent = msg;
     }
@@ -136,6 +138,7 @@
 
         showLoading();
 
+        var gen = ++fetchGen;
         var params = new URLSearchParams();
         params.set("game_mode", state.gameMode);
         if (resolved) {
@@ -150,10 +153,12 @@
                 return res.json();
             })
             .then(function (data) {
+                if (gen !== fetchGen) return;
                 cache[key] = data;
                 render(data);
             })
             .catch(function (err) {
+                if (gen !== fetchGen) return;
                 if (err.message === "request") {
                     showError("Failed to load leaderboard. Please try again later.");
                 } else {
@@ -179,6 +184,7 @@
 
         els.body.innerHTML = "";
 
+        var skipCutoff = new Date("2026-02-01");
         for (var i = 0; i < scores.length; i++) {
             var s = scores[i];
             var tr = document.createElement("tr");
@@ -187,7 +193,7 @@
                 '<td class="col-rank">' + escapeHtml(String(s.rank)) + "</td>" +
                 '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(s.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(s.player.display_name) + "</a></td>" +
                 '<td class="col-maps">' + escapeHtml(String(s.maps_completed)) + "</td>" +
-                '<td class="col-skipped">' + (new Date(s.created_at) < new Date("2026-02-01") ? "" : escapeHtml(String(s.maps_skipped))) + "</td>" +
+                '<td class="col-skipped">' + (new Date(s.created_at) < skipCutoff ? "" : escapeHtml(String(s.maps_skipped))) + "</td>" +
                 '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
                 '<td class="col-date">' + escapeHtml(formatDate(s.created_at)) + "</td>";
 
@@ -195,10 +201,10 @@
         }
     }
 
+    var escapeEl = document.createElement("div");
     function escapeHtml(str) {
-        var div = document.createElement("div");
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
+        escapeEl.textContent = str;
+        return escapeEl.innerHTML;
     }
 
     // Theme toggle
@@ -247,16 +253,63 @@
         els.archiveBtn.textContent = "Archive";
     }
 
+    // --- Hash routing ---
+    function pushHash() {
+        var h = state.gameMode;
+        if (state.month) {
+            h += "/" + state.month;
+        }
+        history.replaceState(null, "", "#" + h);
+    }
+
+    function syncUI() {
+        // Game mode toggles
+        var modeBtns = els.modeToggle.querySelectorAll(".toggle-btn");
+        for (var i = 0; i < modeBtns.length; i++) {
+            modeBtns[i].classList.toggle("active", modeBtns[i].getAttribute("data-value") === state.gameMode);
+        }
+
+        // Period toggles + archive label
+        if (state.month === "") {
+            setActiveToggle("all");
+            resetArchiveLabel();
+        } else if (state.month === "current") {
+            setActiveToggle("month");
+            resetArchiveLabel();
+        } else {
+            setActiveToggle("archive");
+            var parts = state.month.split("-");
+            els.archiveBtn.textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
+        }
+    }
+
+    function applyHash() {
+        var hash = location.hash.replace(/^#/, "");
+        if (!hash) {
+            state.gameMode = "author";
+            state.month = "";
+        } else {
+            var segments = hash.split("/");
+            var mode = segments[0];
+            if (mode === "author" || mode === "gold") {
+                state.gameMode = mode;
+            } else {
+                state.gameMode = "author";
+            }
+            state.month = segments[1] || "";
+        }
+        syncUI();
+        closeArchiveDropdown();
+        fetchLeaderboard();
+    }
+
     // Event listeners
     els.modeToggle.addEventListener("click", function (e) {
         if (e.target.classList.contains("toggle-btn") && !e.target.classList.contains("active")) {
-            var buttons = els.modeToggle.querySelectorAll(".toggle-btn");
-            for (var i = 0; i < buttons.length; i++) {
-                buttons[i].classList.remove("active");
-            }
-            e.target.classList.add("active");
             state.gameMode = e.target.getAttribute("data-value");
             closeArchiveDropdown();
+            pushHash();
+            syncUI();
             fetchLeaderboard();
         }
     });
@@ -283,8 +336,8 @@
             state.month = "current";
         }
 
-        setActiveToggle(value);
-        resetArchiveLabel();
+        pushHash();
+        syncUI();
         fetchLeaderboard();
     });
 
@@ -292,16 +345,10 @@
         var btn = e.target.closest("button");
         if (!btn) return;
 
-        var monthKey = btn.getAttribute("data-month");
-        state.month = monthKey;
-
-        // Parse label from the month key
-        var parts = monthKey.split("-");
-        var label = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
-        els.archiveBtn.textContent = label;
-
-        setActiveToggle("archive");
+        state.month = btn.getAttribute("data-month");
         closeArchiveDropdown();
+        pushHash();
+        syncUI();
         updateArchiveSelection();
         fetchLeaderboard();
     });
@@ -312,7 +359,9 @@
         }
     });
 
+    window.addEventListener("hashchange", applyHash);
+
     // Init
     populateArchiveDropdown();
-    fetchLeaderboard();
+    applyHash();
 })();
