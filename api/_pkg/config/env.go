@@ -31,7 +31,7 @@ func init() {
 	Env.DatabaseURL = os.Getenv("DATABASE_URL")
 	Env.OpenplanetPluginSecret = os.Getenv("OPENPLANET_PLUGIN_SECRET")
 	Env.OpenplanetAuthURL = stringEnv("OPENPLANET_AUTH_URL", "https://openplanet.dev/api/auth/validate")
-	Env.SessionTokenExpiry = durationEnv("SESSION_TOKEN_EXPIRY", 24*time.Hour)
+	Env.SessionTokenExpiry = durationEnv("SESSION_TOKEN_EXPIRY", 30*24*time.Hour)
 	Env.ScoreCooldown = durationEnv("SCORE_COOLDOWN", 15*time.Minute)
 	Env.AuthRateLimit = 10
 }

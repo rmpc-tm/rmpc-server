@@ -184,16 +184,17 @@
 
         els.body.innerHTML = "";
 
-        var skipCutoff = new Date("2026-02-01");
+        var statsCutoff = new Date("2026-02-01");
         for (var i = 0; i < scores.length; i++) {
             var s = scores[i];
             var tr = document.createElement("tr");
+            var hasStats = new Date(s.created_at) >= statsCutoff;
 
             tr.innerHTML =
                 '<td class="col-rank">' + escapeHtml(String(s.rank)) + "</td>" +
                 '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(s.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(s.player.display_name) + "</a></td>" +
-                '<td class="col-maps">' + escapeHtml(String(s.maps_completed)) + "</td>" +
-                '<td class="col-skipped">' + (new Date(s.created_at) < skipCutoff ? "" : escapeHtml(String(s.maps_skipped))) + "</td>" +
+                '<td class="col-maps">' + (hasStats ? escapeHtml(String(s.maps_completed)) : "") + "</td>" +
+                '<td class="col-skipped">' + (hasStats ? escapeHtml(String(s.maps_skipped)) : "") + "</td>" +
                 '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
                 '<td class="col-date">' + escapeHtml(formatDate(s.created_at)) + "</td>";
 
