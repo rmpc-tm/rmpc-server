@@ -26,12 +26,12 @@
         var totalSeconds = Math.floor(ms / 1000);
         var minutes = Math.floor(totalSeconds / 60);
         var seconds = totalSeconds % 60;
-        var millis = ms % 1000;
+        var hundredths = Math.floor((ms % 1000) / 10);
 
         if (minutes > 0) {
-            return minutes + ":" + pad(seconds) + "." + pad3(millis);
+            return minutes + ":" + pad(seconds) + "." + pad(hundredths);
         }
-        return seconds + "." + pad3(millis);
+        return seconds + "." + pad(hundredths);
     }
 
     function pad(n) {
