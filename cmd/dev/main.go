@@ -7,6 +7,7 @@ import (
 	"os"
 
 	handler "rmpc-server/api"
+	metricsinc "rmpc-server/api/metrics"
 )
 
 var devPlayers = map[string]struct {
@@ -33,9 +34,7 @@ func main() {
 	mux.HandleFunc("/api/auth", handler.Auth)
 	mux.HandleFunc("/api/scores", handler.Scores)
 	mux.HandleFunc("/api/leaderboard", handler.Leaderboard)
-	mux.HandleFunc("/api/metrics/inc", func(w http.ResponseWriter, r *http.Request) {
-		handler.MetricInc(w, r, r.URL.Query().Get("name"))
-	})
+	mux.HandleFunc("/api/metrics/inc", metricsinc.Handler)
 	mux.Handle("/", http.FileServer(http.Dir("public")))
 
 	addr := os.Getenv("ADDR")
