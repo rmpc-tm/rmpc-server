@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -11,61 +10,34 @@ import (
 	"rmpc-server/api/_pkg/config"
 	"rmpc-server/api/_pkg/db"
 	"rmpc-server/api/_pkg/response"
-	"rmpc-server/api/_pkg/validate"
 )
 
-type metricRequest struct {
-	Name      string `json:"name"      validate:"required"`
-	Increment int    `json:"increment"`
-}
-
-func Metrics(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
+// MetricInc handles POST /api/metrics/inc?name=X
+func MetricInc(w http.ResponseWriter, r *http.Request, name string) {
+	if r.Method != http.MethodPost {
 		response.Error(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
-	auth.RequireAuth(handleMetricSubmit)(w, r)
-}
+	auth.RequireAuth(func(w http.ResponseWriter, r *http.Request, _ uuid.UUID) {
+		if !config.IsAllowedMetric(name) {
+			response.Error(w, http.StatusBadRequest, "metric name not allowed")
+			return
+		}
 
-func handleMetricSubmit(w http.ResponseWriter, r *http.Request, _ uuid.UUID) {
-	// Parse request
-	r.Body = http.MaxBytesReader(w, r.Body, 4*1024) // 4KB
-	var req metricRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	if err := validate.Struct(req); err != nil {
-		response.Error(w, http.StatusBadRequest, validate.FormatError(err))
-		return
-	}
+		database, err := db.GetDB()
+		if err != nil {
+			slog.Error("database connection error", "error", err)
+			response.Error(w, http.StatusServiceUnavailable, "service unavailable")
+			return
+		}
 
-	if req.Increment <= 0 {
-		req.Increment = 1
-	}
-	if req.Increment > 100 {
-		req.Increment = 100
-	}
+		if err := db.UpsertMetric(database, name, 1); err != nil {
+			slog.Error("upsert metric error", "error", err)
+			response.Error(w, http.StatusServiceUnavailable, "service unavailable")
+			return
+		}
 
-	// Check allowlist
-	if !config.IsAllowedMetric(req.Name) {
-		response.Error(w, http.StatusBadRequest, "metric name not allowed")
-		return
-	}
-
-	database, err := db.GetDB()
-	if err != nil {
-		slog.Error("database connection error", "error", err)
-		response.Error(w, http.StatusServiceUnavailable, "service unavailable")
-		return
-	}
-
-	if err := db.UpsertMetric(database, req.Name, req.Increment); err != nil {
-		slog.Error("upsert metric error", "error", err)
-		response.Error(w, http.StatusServiceUnavailable, "service unavailable")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusNoContent)
+	})(w, r)
 }

@@ -4,10 +4,6 @@ allowed_metrics:
   - run_started        # Player started a new RMPC run
   - run_completed      # Player completed a run (time ran out or manual end)
   - run_abandoned      # Player abandoned a run early
-  - map_completed      # A map was completed (any medal)
+  - map_completed      # A map was succesfully completed (any medal)
   - map_skipped        # A map was skipped
   - map_broken         # A map was marked as broken
-  - medal_author       # Author time achieved
-  - medal_gold         # Gold medal achieved
-  - medal_silver       # Silver medal achieved
-  - medal_bronze       # Bronze medal achieved
