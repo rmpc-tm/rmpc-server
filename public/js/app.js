@@ -28,37 +28,50 @@
         if (!container) return;
 
         var days = 30;
-        var maxHeight = 26;
-        var data = [];
-        var now = new Date();
+        var maxHeight = 18;
 
-        for (var i = days - 1; i >= 0; i--) {
-            var d = new Date(now);
-            d.setDate(d.getDate() - i);
-            data.push({
-                date: d,
-                count: Math.floor(Math.random() * 7)
-            });
+        function generateMockData() {
+            var data = [];
+            var now = new Date();
+            for (var i = days - 1; i >= 0; i--) {
+                var d = new Date(now);
+                d.setDate(d.getDate() - i);
+                data.push({ date: d, count: Math.floor(Math.random() * 7) });
+            }
+            return data;
         }
 
-        var max = 1;
-        for (var i = 0; i < data.length; i++) {
-            if (data[i].count > max) max = data[i].count;
-        }
-
-        for (var i = 0; i < data.length; i++) {
-            var entry = data[i];
+        // Create placeholder bars at 0 height
+        var bars = [];
+        for (var i = 0; i < days; i++) {
             var bar = document.createElement("div");
             bar.className = "activity-bar";
-
-            var h = entry.count === 0 ? 2 : Math.round((entry.count / max) * maxHeight);
-            var opacity = entry.count === 0 ? 0.04 : 0.06 + (entry.count / max) * 0.14;
-
-            bar.style.height = h + "px";
-            bar.style.opacity = opacity;
-
+            bar.style.height = "0px";
+            bar.style.opacity = "0";
             container.appendChild(bar);
+            bars.push(bar);
         }
+
+        // Simulate async data load
+        setTimeout(function () {
+            var data = generateMockData();
+
+            var max = 1;
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].count > max) max = data[i].count;
+            }
+
+            for (var i = 0; i < data.length; i++) {
+                var entry = data[i];
+                var h = entry.count === 0 ? 2 : Math.round((entry.count / max) * maxHeight);
+                var opacity = entry.count === 0 ? 0.04 : 0.06 + (entry.count / max) * 0.14;
+                var duration = 0.4 + Math.random() * 0.6;
+
+                bars[i].style.transition = "height " + duration + "s ease-out, opacity " + duration + "s ease-out";
+                bars[i].style.height = h + "px";
+                bars[i].style.opacity = opacity;
+            }
+        }, 800);
     })();
 
     function formatScore(ms) {
