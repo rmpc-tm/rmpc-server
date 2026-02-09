@@ -28,7 +28,7 @@
         if (!container) return;
 
         var days = 30;
-        var maxHeight = 22;
+        var maxHeight = 26;
         var data = [];
         var now = new Date();
 
@@ -52,17 +52,16 @@
             bar.className = "activity-bar";
 
             var h = entry.count === 0 ? 2 : Math.round((entry.count / max) * maxHeight);
-            var opacity = entry.count === 0 ? 0.15 : 0.35 + (entry.count / max) * 0.65;
+            var opacity = entry.count === 0 ? 0.04 : 0.06 + (entry.count / max) * 0.14;
 
             bar.style.height = h + "px";
             bar.style.opacity = opacity;
 
-            var label = entry.date.toLocaleDateString(undefined, {
+            bar.title = entry.date.toLocaleDateString(undefined, {
                 weekday: "short",
                 month: "short",
                 day: "numeric"
             });
-            bar.title = label + ": " + entry.count + " run" + (entry.count !== 1 ? "s" : "");
 
             container.appendChild(bar);
         }

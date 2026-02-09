@@ -804,50 +804,26 @@ tbody tr:nth-child(10) { animation-delay: 0.14s; }
 tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 
 /* ---------- Activity chart ---------- */
-.activity-chart {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.5rem;
-    margin-top: 0.4rem;
-    padding-top: 0.35rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.activity-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.55rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--topbar-text);
-    opacity: 0.5;
-    white-space: nowrap;
-    line-height: 1;
-    flex-shrink: 0;
-    padding-bottom: 1px;
-}
-
 .activity-bars {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     display: flex;
     align-items: flex-end;
-    gap: 2px;
-    height: 24px;
-    flex: 1;
-    min-width: 0;
+    gap: 1px;
+    height: 28px;
+    padding: 0 1.25rem;
+    pointer-events: none;
 }
 
 .activity-bar {
     flex: 1;
     min-width: 0;
-    max-width: 8px;
     border-radius: 1px 1px 0 0;
     background: var(--topbar-accent);
     min-height: 2px;
-    transition: opacity 0.15s ease;
-}
-
-.activity-bar:hover {
-    opacity: 1 !important;
+    pointer-events: auto;
 }
 
 /* ---------- Responsive ---------- */
@@ -876,16 +852,9 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
         align-items: flex-start;
     }
 
-    .activity-chart {
-        gap: 0.35rem;
-    }
-
-    .activity-label {
-        font-size: 0.5rem;
-    }
-
     .activity-bars {
-        height: 18px;
+        padding: 0 0.75rem;
+        height: 22px;
     }
 
     .controls {
