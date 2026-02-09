@@ -384,6 +384,11 @@ main {
     border-radius: 0 3px 3px 0;
 }
 
+.toggle-btn.archive-btn.open {
+    border-radius: 0 3px 0 0;
+    border-bottom-color: var(--surface);
+}
+
 .toggle-btn.active {
     background: var(--toggle-active-bg);
     color: var(--toggle-active-text);
@@ -398,16 +403,32 @@ main {
     z-index: 1;
 }
 
+/* ---------- Archive button chevron ---------- */
+.archive-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.archive-chevron {
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.archive-btn.open .archive-chevron {
+    transform: rotate(180deg);
+}
+
 /* ---------- Archive dropdown ---------- */
 .archive-dropdown {
     display: none;
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 4px;
     background: var(--surface);
     border: 1px solid var(--border-strong);
-    border-radius: 3px;
+    border-top: none;
+    border-radius: 0 0 3px 3px;
     max-height: 220px;
     overflow-y: auto;
     z-index: 10;
@@ -620,6 +641,37 @@ thead .col-skipped svg {
     display: block;
     margin: 0 auto;
     opacity: 0.45;
+}
+
+/* ---------- Instant tooltip ---------- */
+[data-tooltip] {
+    position: relative;
+    cursor: default;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    padding: 0.25rem 0.5rem;
+    background: var(--toggle-active-bg);
+    color: var(--toggle-active-text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    white-space: nowrap;
+    border-radius: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    z-index: 5;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
 }
 
 /* Score column */

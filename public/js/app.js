@@ -117,6 +117,7 @@
 
     function closeArchiveDropdown() {
         els.archiveDropdown.classList.remove("open");
+        els.archiveBtn.classList.remove("open");
     }
 
     function updateArchiveSelection() {
@@ -196,7 +197,7 @@
                 '<td class="col-maps">' + (hasStats ? escapeHtml(String(s.maps_completed)) : "") + "</td>" +
                 '<td class="col-skipped">' + (hasStats ? escapeHtml(String(s.maps_skipped)) : "") + "</td>" +
                 '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
-                '<td class="col-date">' + escapeHtml(formatDate(s.created_at)) + "</td>";
+                '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + escapeHtml(formatDate(s.created_at)) + "</td>";
 
             els.body.appendChild(tr);
         }
@@ -251,7 +252,7 @@
     }
 
     function resetArchiveLabel() {
-        els.archiveBtn.textContent = "Archive";
+        els.archiveBtn.querySelector(".archive-label").textContent = "Archive";
     }
 
     // --- Hash routing ---
@@ -280,7 +281,7 @@
         } else {
             setActiveToggle("archive");
             var parts = state.month.split("-");
-            els.archiveBtn.textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
+            els.archiveBtn.querySelector(".archive-label").textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
         }
     }
 
@@ -323,6 +324,7 @@
 
         if (value === "archive") {
             els.archiveDropdown.classList.toggle("open");
+            els.archiveBtn.classList.toggle("open");
             updateArchiveSelection();
             return;
         }
@@ -355,7 +357,7 @@
     });
 
     document.addEventListener("click", function (e) {
-        if (!els.archiveDropdown.contains(e.target) && e.target !== els.archiveBtn) {
+        if (!els.archiveDropdown.contains(e.target) && !els.archiveBtn.contains(e.target)) {
             closeArchiveDropdown();
         }
     });
