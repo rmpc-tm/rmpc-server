@@ -52,8 +52,8 @@
                     if (points[i] > max) max = points[i];
                 }
 
-                // Animate in on next frame
-                requestAnimationFrame(function () {
+                // Double rAF ensures the browser paints the 0-height state first
+                requestAnimationFrame(function () { requestAnimationFrame(function () {
                     for (var i = 0; i < points.length; i++) {
                         var count = points[i];
                         var h = count === 0 ? 2 : Math.round((count / max) * maxHeight);
@@ -64,7 +64,7 @@
                         bars[i].style.height = h + "px";
                         bars[i].style.opacity = opacity;
                     }
-                });
+                }); });
             })
             .catch(function () {});
     })();
