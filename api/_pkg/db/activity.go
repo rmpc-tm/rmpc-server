@@ -9,11 +9,6 @@ import (
 	"rmpc-server/db/.gen/rmpc/public/table"
 )
 
-type activityRow struct {
-	Date  time.Time `alias:"bucket"`
-	Count int64     `alias:"total_medals"`
-}
-
 // GetMedalActivity returns the total maps completed per day for the last N days,
 // keyed by date string (YYYY-MM-DD). Days with no activity are absent from the map.
 func GetMedalActivity(db *sql.DB, days int) (map[string]int64, error) {
@@ -32,14 +27,21 @@ func GetMedalActivity(db *sql.DB, days int) (map[string]int64, error) {
 		bucket.ASC(),
 	)
 
-	var rows []activityRow
-	if err := stmt.Query(db, &rows); err != nil {
+	query, args := stmt.Sql()
+	rows, err := db.Query(query, args...)
+	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	result := make(map[string]int64, len(rows))
-	for _, r := range rows {
-		result[r.Date.Format("2006-01-02")] = r.Count
+	result := make(map[string]int64)
+	for rows.Next() {
+		var date time.Time
+		var count int64
+		if err := rows.Scan(&date, &count); err != nil {
+			return nil, err
+		}
+		result[date.Format("2006-01-02")] = count
 	}
-	return result, nil
+	return result, rows.Err()
 }
