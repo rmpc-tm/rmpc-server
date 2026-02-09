@@ -28,6 +28,9 @@ var Env struct {
 
 	// LEADERBOARD_CACHE_TTL - how long Vercel edge may cache leaderboard responses, e.g. "5m"
 	LeaderboardCacheTTL time.Duration
+
+	// ACTIVITY_CACHE_TTL - how long Vercel edge may cache activity responses, e.g. "4h"
+	ActivityCacheTTL time.Duration
 }
 
 func init() {
@@ -38,6 +41,7 @@ func init() {
 	Env.ScoreCooldown = durationEnv("SCORE_COOLDOWN", 10*time.Minute)
 	Env.AuthRateLimit = 10
 	Env.LeaderboardCacheTTL = durationEnv("LEADERBOARD_CACHE_TTL", 5*time.Minute)
+	Env.ActivityCacheTTL = durationEnv("ACTIVITY_CACHE_TTL", 4*time.Hour)
 }
 
 func stringEnv(key, fallback string) string {

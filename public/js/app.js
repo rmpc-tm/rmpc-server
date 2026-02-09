@@ -22,56 +22,51 @@
         archiveDropdown: document.getElementById("archive-dropdown")
     };
 
-    // --- Activity chart (mock data) ---
+    // --- Activity chart ---
     (function renderActivityChart() {
         var container = document.getElementById("activity-bars");
         if (!container) return;
 
-        var days = 30;
         var maxHeight = 18;
 
-        function generateMockData() {
-            var data = [];
-            var now = new Date();
-            for (var i = days - 1; i >= 0; i--) {
-                var d = new Date(now);
-                d.setDate(d.getDate() - i);
-                data.push({ date: d, count: Math.floor(Math.random() * 7) });
-            }
-            return data;
-        }
+        fetch("api/activity")
+            .then(function (res) { return res.ok ? res.json() : null; })
+            .then(function (data) {
+                if (!data || !data.medals || data.medals.length === 0) return;
 
-        // Create placeholder bars at 0 height
-        var bars = [];
-        for (var i = 0; i < days; i++) {
-            var bar = document.createElement("div");
-            bar.className = "activity-bar";
-            bar.style.height = "0px";
-            bar.style.opacity = "0";
-            container.appendChild(bar);
-            bars.push(bar);
-        }
+                var points = data.medals;
 
-        // Simulate async data load
-        setTimeout(function () {
-            var data = generateMockData();
+                // Create bars at 0 height
+                var bars = [];
+                for (var i = 0; i < points.length; i++) {
+                    var bar = document.createElement("div");
+                    bar.className = "activity-bar";
+                    bar.style.height = "0px";
+                    bar.style.opacity = "0";
+                    container.appendChild(bar);
+                    bars.push(bar);
+                }
 
-            var max = 1;
-            for (var i = 0; i < data.length; i++) {
-                if (data[i].count > max) max = data[i].count;
-            }
+                var max = 1;
+                for (var i = 0; i < points.length; i++) {
+                    if (points[i] > max) max = points[i];
+                }
 
-            for (var i = 0; i < data.length; i++) {
-                var entry = data[i];
-                var h = entry.count === 0 ? 2 : Math.round((entry.count / max) * maxHeight);
-                var opacity = entry.count === 0 ? 0.04 : 0.06 + (entry.count / max) * 0.14;
-                var duration = 0.4 + Math.random() * 0.6;
+                // Animate in on next frame
+                requestAnimationFrame(function () {
+                    for (var i = 0; i < points.length; i++) {
+                        var count = points[i];
+                        var h = count === 0 ? 2 : Math.round((count / max) * maxHeight);
+                        var opacity = count === 0 ? 0.04 : 0.06 + (count / max) * 0.14;
+                        var duration = 0.4 + Math.random() * 0.6;
 
-                bars[i].style.transition = "height " + duration + "s ease-out, opacity " + duration + "s ease-out";
-                bars[i].style.height = h + "px";
-                bars[i].style.opacity = opacity;
-            }
-        }, 800);
+                        bars[i].style.transition = "height " + duration + "s ease-out, opacity " + duration + "s ease-out";
+                        bars[i].style.height = h + "px";
+                        bars[i].style.opacity = opacity;
+                    }
+                });
+            })
+            .catch(function () {});
     })();
 
     function formatScore(ms) {
