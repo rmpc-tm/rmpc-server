@@ -147,7 +147,7 @@ header::after {
 .header-inner {
     max-width: 960px;
     margin: 0 auto;
-    padding: 0.65rem 1.25rem;
+    padding: 0.65rem 1.25rem 1.1rem;
     position: relative;
 }
 
@@ -806,7 +806,7 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 /* ---------- Activity chart ---------- */
 .activity-bars {
     position: absolute;
-    bottom: -3px;
+    bottom: 0;
     left: 0;
     right: 0;
     display: flex;
