@@ -643,6 +643,37 @@ thead .col-skipped svg {
     opacity: 0.45;
 }
 
+/* ---------- Instant tooltip ---------- */
+[data-tooltip] {
+    position: relative;
+    cursor: default;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.25rem 0.5rem;
+    background: var(--toggle-active-bg);
+    color: var(--toggle-active-text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    white-space: nowrap;
+    border-radius: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+}
+
 /* Score column */
 .col-score {
     font-family: 'IBM Plex Mono', monospace;
