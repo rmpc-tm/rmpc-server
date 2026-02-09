@@ -57,12 +57,6 @@
             bar.style.height = h + "px";
             bar.style.opacity = opacity;
 
-            bar.title = entry.date.toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric"
-            });
-
             container.appendChild(bar);
         }
     })();
