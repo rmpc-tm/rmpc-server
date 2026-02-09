@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
+	"rmpc-server/api/_pkg/config"
 	"rmpc-server/api/_pkg/db"
 	"rmpc-server/api/_pkg/response"
 	"rmpc-server/api/_pkg/validate"
@@ -109,6 +111,11 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 	gameModeResp := query.GameMode
 	if gameModeResp == "" {
 		gameModeResp = "all"
+	}
+
+	if ttl := config.Env.LeaderboardCacheTTL; ttl > 0 {
+		w.Header().Set("Cache-Control",
+			fmt.Sprintf("public, s-maxage=%d, stale-while-revalidate=60, stale-if-error=3600", int(ttl.Seconds())))
 	}
 
 	response.JSON(w, http.StatusOK, leaderboardResponse{

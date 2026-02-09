@@ -14,17 +14,20 @@ var Env struct {
 	// OPENPLANET_PLUGIN_SECRET - secret for Openplanet token validation (required)
 	OpenplanetPluginSecret string
 
-	// OPENPLANET_AUTH_URL - Openplanet auth endpoint (default: https://openplanet.dev/api/auth/validate)
+	// OPENPLANET_AUTH_URL - Openplanet auth endpoint
 	OpenplanetAuthURL string
 
-	// SESSION_TOKEN_EXPIRY - session lifetime as Go duration, e.g. "720h" (default: 720h)
+	// SESSION_TOKEN_EXPIRY - session lifetime as Go duration, e.g. "720h"
 	SessionTokenExpiry time.Duration
 
-	// SCORE_COOLDOWN - minimum time between score submissions per player, e.g. "1m" (default: 1m)
+	// SCORE_COOLDOWN - minimum time between score submissions per player, e.g. "1m"
 	ScoreCooldown time.Duration
 
-	// AUTH_RATE_LIMIT - max auth requests per IP per minute (default: 10)
+	// AUTH_RATE_LIMIT - max auth requests per IP per minute
 	AuthRateLimit int
+
+	// LEADERBOARD_CACHE_TTL - how long Vercel edge may cache leaderboard responses, e.g. "5m"
+	LeaderboardCacheTTL time.Duration
 }
 
 func init() {
@@ -32,8 +35,9 @@ func init() {
 	Env.OpenplanetPluginSecret = os.Getenv("OPENPLANET_PLUGIN_SECRET")
 	Env.OpenplanetAuthURL = stringEnv("OPENPLANET_AUTH_URL", "https://openplanet.dev/api/auth/validate")
 	Env.SessionTokenExpiry = durationEnv("SESSION_TOKEN_EXPIRY", 30*24*time.Hour)
-	Env.ScoreCooldown = durationEnv("SCORE_COOLDOWN", 15*time.Minute)
+	Env.ScoreCooldown = durationEnv("SCORE_COOLDOWN", 10*time.Minute)
 	Env.AuthRateLimit = 10
+	Env.LeaderboardCacheTTL = durationEnv("LEADERBOARD_CACHE_TTL", 5*time.Minute)
 }
 
 func stringEnv(key, fallback string) string {
@@ -54,4 +58,3 @@ func durationEnv(key string, fallback time.Duration) time.Duration {
 	}
 	return d
 }
-
