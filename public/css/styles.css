@@ -384,6 +384,11 @@ main {
     border-radius: 0 3px 3px 0;
 }
 
+.toggle-btn.archive-btn.open {
+    border-radius: 0 3px 0 0;
+    border-bottom-color: var(--surface);
+}
+
 .toggle-btn.active {
     background: var(--toggle-active-bg);
     color: var(--toggle-active-text);
@@ -398,16 +403,32 @@ main {
     z-index: 1;
 }
 
+/* ---------- Archive button chevron ---------- */
+.archive-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.archive-chevron {
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.archive-btn.open .archive-chevron {
+    transform: rotate(180deg);
+}
+
 /* ---------- Archive dropdown ---------- */
 .archive-dropdown {
     display: none;
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 4px;
     background: var(--surface);
     border: 1px solid var(--border-strong);
-    border-radius: 3px;
+    border-top: none;
+    border-radius: 0 0 3px 3px;
     max-height: 220px;
     overflow-y: auto;
     z-index: 10;

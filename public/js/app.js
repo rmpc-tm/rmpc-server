@@ -117,6 +117,7 @@
 
     function closeArchiveDropdown() {
         els.archiveDropdown.classList.remove("open");
+        els.archiveBtn.classList.remove("open");
     }
 
     function updateArchiveSelection() {
@@ -251,7 +252,7 @@
     }
 
     function resetArchiveLabel() {
-        els.archiveBtn.textContent = "Archive";
+        els.archiveBtn.querySelector(".archive-label").textContent = "Archive";
     }
 
     // --- Hash routing ---
@@ -280,7 +281,7 @@
         } else {
             setActiveToggle("archive");
             var parts = state.month.split("-");
-            els.archiveBtn.textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
+            els.archiveBtn.querySelector(".archive-label").textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
         }
     }
 
@@ -323,6 +324,7 @@
 
         if (value === "archive") {
             els.archiveDropdown.classList.toggle("open");
+            els.archiveBtn.classList.toggle("open");
             updateArchiveSelection();
             return;
         }
