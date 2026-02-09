@@ -17,8 +17,6 @@ type activityRow struct {
 // GetMedalActivity returns the total maps completed per day for the last N days,
 // keyed by date string (YYYY-MM-DD). Days with no activity are absent from the map.
 func GetMedalActivity(db *sql.DB, days int) (map[string]int64, error) {
-	start := time.Now().UTC().Add(-time.Duration(days) * 24 * time.Hour)
-
 	bucket := CAST(table.Scores.CreatedAt).AS_DATE()
 
 	stmt := SELECT(
@@ -27,7 +25,7 @@ func GetMedalActivity(db *sql.DB, days int) (map[string]int64, error) {
 	).FROM(
 		table.Scores,
 	).WHERE(
-		table.Scores.CreatedAt.GT_EQ(TimestampzT(start)),
+		table.Scores.CreatedAt.GT_EQ(NOW().SUB(INTERVAL(float64(days), DAY))),
 	).GROUP_BY(
 		bucket,
 	).ORDER_BY(
