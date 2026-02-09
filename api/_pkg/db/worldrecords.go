@@ -18,7 +18,22 @@ type WorldRecord struct {
 	CreatedAt   *time.Time `alias:"scores.created_at"`
 }
 
-func GetWorldRecords(db *sql.DB) ([]WorldRecord, error) {
+type WorldRecordParams struct {
+	StartTime *time.Time
+	EndTime   *time.Time
+}
+
+func GetWorldRecords(db *sql.DB, params WorldRecordParams) ([]WorldRecord, error) {
+	condition := table.BannedPlayers.ID.IS_NULL().AND(
+		table.Scores.GameMode.IN(enum.GameMode.Author, enum.GameMode.Gold),
+	)
+	if params.StartTime != nil {
+		condition = condition.AND(table.Scores.CreatedAt.GT_EQ(TimestampzT(*params.StartTime)))
+	}
+	if params.EndTime != nil {
+		condition = condition.AND(table.Scores.CreatedAt.LT(TimestampzT(*params.EndTime)))
+	}
+
 	// Best score per game_mode using DISTINCT ON, excluding banned players
 	stmt := SELECT(
 		table.Scores.GameMode,
@@ -33,9 +48,7 @@ func GetWorldRecords(db *sql.DB) ([]WorldRecord, error) {
 			INNER_JOIN(table.Players, table.Players.ID.EQ(table.Scores.PlayerID)).
 			LEFT_JOIN(table.BannedPlayers, table.BannedPlayers.PlayerID.EQ(table.Scores.PlayerID)),
 	).WHERE(
-		table.BannedPlayers.ID.IS_NULL().AND(
-			table.Scores.GameMode.IN(enum.GameMode.Author, enum.GameMode.Gold),
-		),
+		condition,
 	).ORDER_BY(
 		table.Scores.GameMode,
 		table.Scores.Score.DESC(),

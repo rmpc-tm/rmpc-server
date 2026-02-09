@@ -103,7 +103,7 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 		bestScores,
 	).ORDER_BY(
 		bsScore.DESC(),
-	).LIMIT(100)
+	).LIMIT(50)
 
 	var entries []LeaderboardEntry
 	err := stmt.Query(db, &entries)
