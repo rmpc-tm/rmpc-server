@@ -22,6 +22,52 @@
         archiveDropdown: document.getElementById("archive-dropdown")
     };
 
+    // --- Activity chart (mock data) ---
+    (function renderActivityChart() {
+        var container = document.getElementById("activity-bars");
+        if (!container) return;
+
+        var days = 30;
+        var maxHeight = 22;
+        var data = [];
+        var now = new Date();
+
+        for (var i = days - 1; i >= 0; i--) {
+            var d = new Date(now);
+            d.setDate(d.getDate() - i);
+            data.push({
+                date: d,
+                count: Math.floor(Math.random() * 7)
+            });
+        }
+
+        var max = 1;
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].count > max) max = data[i].count;
+        }
+
+        for (var i = 0; i < data.length; i++) {
+            var entry = data[i];
+            var bar = document.createElement("div");
+            bar.className = "activity-bar";
+
+            var h = entry.count === 0 ? 2 : Math.round((entry.count / max) * maxHeight);
+            var opacity = entry.count === 0 ? 0.15 : 0.35 + (entry.count / max) * 0.65;
+
+            bar.style.height = h + "px";
+            bar.style.opacity = opacity;
+
+            var label = entry.date.toLocaleDateString(undefined, {
+                weekday: "short",
+                month: "short",
+                day: "numeric"
+            });
+            bar.title = label + ": " + entry.count + " run" + (entry.count !== 1 ? "s" : "");
+
+            container.appendChild(bar);
+        }
+    })();
+
     function formatScore(ms) {
         var totalSeconds = Math.floor(ms / 1000);
         var minutes = Math.floor(totalSeconds / 60);
