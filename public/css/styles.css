@@ -147,7 +147,7 @@ header::after {
 .header-inner {
     max-width: 960px;
     margin: 0 auto;
-    padding: 0.65rem 1.25rem;
+    padding: 0.65rem 1.25rem 1.4rem;
     position: relative;
 }
 
@@ -803,6 +803,27 @@ tbody tr:nth-child(9) { animation-delay: 0.13s; }
 tbody tr:nth-child(10) { animation-delay: 0.14s; }
 tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 
+/* ---------- Activity chart ---------- */
+.activity-bars {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 1px;
+    height: 28px;
+    padding: 0 1.25rem;
+    pointer-events: none;
+}
+
+.activity-bar {
+    flex: 1;
+    min-width: 0;
+    border-radius: 1px 1px 0 0;
+    background: var(--topbar-accent);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
     .header-inner {
@@ -827,6 +848,11 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
         flex-direction: column;
         gap: 0;
         align-items: flex-start;
+    }
+
+    .activity-bars {
+        padding: 0 0.75rem;
+        height: 22px;
     }
 
     .controls {

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -113,10 +112,7 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 		gameModeResp = "all"
 	}
 
-	if ttl := config.Env.LeaderboardCacheTTL; ttl > 0 {
-		w.Header().Set("Cache-Control",
-			fmt.Sprintf("public, s-maxage=%d, stale-while-revalidate=60, stale-if-error=3600", int(ttl.Seconds())))
-	}
+	response.SetCache(w, config.Env.LeaderboardCacheTTL)
 
 	response.JSON(w, http.StatusOK, leaderboardResponse{
 		Scores:   scores,

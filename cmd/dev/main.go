@@ -34,6 +34,7 @@ func main() {
 	mux.HandleFunc("/api/auth", handler.Auth)
 	mux.HandleFunc("/api/scores", handler.Scores)
 	mux.HandleFunc("/api/leaderboard", handler.Leaderboard)
+	mux.HandleFunc("/api/activity", handler.Activity)
 	mux.HandleFunc("/api/metrics/inc", metricsinc.Handler)
 	mux.Handle("/", http.FileServer(http.Dir("public")))
 

@@ -22,6 +22,53 @@
         archiveDropdown: document.getElementById("archive-dropdown")
     };
 
+    // --- Activity chart ---
+    (function renderActivityChart() {
+        var container = document.getElementById("activity-bars");
+        if (!container) return;
+
+        var maxHeight = 18;
+
+        fetch("api/activity")
+            .then(function (res) { return res.ok ? res.json() : null; })
+            .then(function (data) {
+                if (!data || !data.medals || data.medals.length === 0) return;
+
+                var points = data.medals;
+
+                // Create bars at 0 height
+                var bars = [];
+                for (var i = 0; i < points.length; i++) {
+                    var bar = document.createElement("div");
+                    bar.className = "activity-bar";
+                    bar.style.height = "0px";
+                    bar.style.opacity = "0";
+                    container.appendChild(bar);
+                    bars.push(bar);
+                }
+
+                var max = 1;
+                for (var i = 0; i < points.length; i++) {
+                    if (points[i] > max) max = points[i];
+                }
+
+                // Double rAF ensures the browser paints the 0-height state first
+                requestAnimationFrame(function () { requestAnimationFrame(function () {
+                    for (var i = 0; i < points.length; i++) {
+                        var count = points[i];
+                        var h = count === 0 ? 2 : Math.round((count / max) * maxHeight);
+                        var opacity = count === 0 ? 0.04 : 0.06 + (count / max) * 0.14;
+                        var duration = 0.4 + Math.random() * 0.6;
+
+                        bars[i].style.transition = "height " + duration + "s ease-out, opacity " + duration + "s ease-out";
+                        bars[i].style.height = h + "px";
+                        bars[i].style.opacity = opacity;
+                    }
+                }); });
+            })
+            .catch(function () {});
+    })();
+
     function formatScore(ms) {
         var totalSeconds = Math.floor(ms / 1000);
         var minutes = Math.floor(totalSeconds / 60);
