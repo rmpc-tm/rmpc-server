@@ -652,9 +652,8 @@ thead .col-skipped svg {
 [data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: calc(100% + 4px);
-    left: 50%;
-    transform: translateX(-50%);
+    top: calc(100% + 4px);
+    right: 0;
     padding: 0.25rem 0.5rem;
     background: var(--toggle-active-bg);
     color: var(--toggle-active-text);
@@ -668,6 +667,7 @@ thead .col-skipped svg {
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.1s ease;
+    z-index: 5;
 }
 
 [data-tooltip]:hover::after {
