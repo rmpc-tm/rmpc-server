@@ -357,7 +357,7 @@
     });
 
     document.addEventListener("click", function (e) {
-        if (!els.archiveDropdown.contains(e.target) && e.target !== els.archiveBtn) {
+        if (!els.archiveDropdown.contains(e.target) && !els.archiveBtn.contains(e.target)) {
             closeArchiveDropdown();
         }
     });
