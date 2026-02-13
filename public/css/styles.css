@@ -861,8 +861,8 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
     }
 
     .archive-dropdown {
-        right: 0;
-        left: 0;
+        position: static;
+        border-top: none;
     }
 
     .toggle-group {
@@ -872,10 +872,6 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
     .toggle-btn {
         flex: 1;
         justify-content: center;
-    }
-
-    .archive-dropdown {
-        top: calc(100% - 1px);
     }
 
     main {
