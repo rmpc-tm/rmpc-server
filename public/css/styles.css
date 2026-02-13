@@ -871,7 +871,11 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 
     .toggle-btn {
         flex: 1;
-        text-align: center;
+        justify-content: center;
+    }
+
+    .archive-dropdown {
+        top: calc(100% - 1px);
     }
 
     main {
