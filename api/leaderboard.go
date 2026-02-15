@@ -38,6 +38,21 @@ type leaderboardEntryJSON struct {
 	CreatedAt     time.Time             `json:"created_at"`
 }
 
+func writeLeaderboardResponse(w http.ResponseWriter, scores []leaderboardEntryJSON, month, gameMode string) {
+	if gameMode == "" {
+		gameMode = "all"
+	}
+	response.SetCache(w, config.Env.LeaderboardCacheTTL)
+	response.JSON(w, http.StatusOK, leaderboardResponse{
+		Scores:   scores,
+		Month:    month,
+		GameMode: gameMode,
+	})
+}
+
+// No leaderboard data exists before this month.
+var leaderboardEarliestMonth = time.Date(2025, time.November, 1, 0, 0, 0, 0, time.UTC)
+
 func Leaderboard(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		response.Error(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -63,6 +78,15 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusBadRequest, "invalid month format, expected YYYY-MM")
 			return
 		}
+
+		// return empty leaderboard for requests outside expected range
+		now := time.Now().UTC()
+		currentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+		if t.Before(leaderboardEarliestMonth) || t.After(currentMonth) {
+			writeLeaderboardResponse(w, []leaderboardEntryJSON{}, query.Month, query.GameMode)
+			return
+		}
+
 		end := t.AddDate(0, 1, 0)
 		startTime = &t
 		endTime = &end
@@ -107,16 +131,5 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	gameModeResp := query.GameMode
-	if gameModeResp == "" {
-		gameModeResp = "all"
-	}
-
-	response.SetCache(w, config.Env.LeaderboardCacheTTL)
-
-	response.JSON(w, http.StatusOK, leaderboardResponse{
-		Scores:   scores,
-		Month:    query.Month,
-		GameMode: gameModeResp,
-	})
+	writeLeaderboardResponse(w, scores, query.Month, query.GameMode)
 }
