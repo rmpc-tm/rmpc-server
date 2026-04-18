@@ -256,41 +256,6 @@
         return escapeEl.innerHTML;
     }
 
-    // Theme toggle
-    var themeToggle = document.getElementById("theme-toggle");
-    var themeCycle = ["dark", "light", "system"];
-
-    function applyTheme(setting) {
-        var resolved = setting;
-        if (setting === "system") {
-            resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        }
-        document.documentElement.setAttribute("data-theme", resolved);
-
-        var icons = themeToggle.querySelectorAll(".theme-icon");
-        for (var i = 0; i < icons.length; i++) {
-            icons[i].classList.toggle("active", icons[i].getAttribute("data-theme") === setting);
-        }
-
-        var labels = { system: "System theme", light: "Light mode", dark: "Dark mode" };
-        themeToggle.title = labels[setting];
-    }
-
-    themeToggle.addEventListener("click", function () {
-        var current = localStorage.getItem("theme") || "dark";
-        var next = themeCycle[(themeCycle.indexOf(current) + 1) % themeCycle.length];
-        localStorage.setItem("theme", next);
-        applyTheme(next);
-    });
-
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
-        if ((localStorage.getItem("theme") || "dark") === "system") {
-            applyTheme("system");
-        }
-    });
-
-    applyTheme(localStorage.getItem("theme") || "dark");
-
     function setActiveToggle(value) {
         var buttons = els.periodToggle.querySelectorAll(".toggle-btn");
         for (var i = 0; i < buttons.length; i++) {

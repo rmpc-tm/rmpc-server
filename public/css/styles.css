@@ -6,42 +6,7 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 /* ---------- Theme tokens ---------- */
-:root,
-[data-theme="light"] {
-    --bg: #FAF5F6;
-    --text: #2C1A24;
-    --text-secondary: #8A7480;
-    --heading: #1A0A14;
-    --link: #BA3065;
-    --link-hover: #8E1E4A;
-    --border: #E8D8DE;
-    --border-strong: #D4B8C4;
-    --surface: #F4EDF0;
-    --surface-hover: #EDDFE4;
-    --accent: #D44B78;
-    --accent-glow: rgba(212, 75, 120, 0.12);
-    --error: #B83030;
-    --error-bg: rgba(184, 48, 48, 0.06);
-    --rank-gold: #9A7200;
-    --rank-silver: #686068;
-    --rank-bronze: #8B4C1A;
-    --rank-gold-bg: rgba(154, 114, 0, 0.06);
-    --rank-silver-bg: rgba(104, 96, 104, 0.04);
-    --rank-bronze-bg: rgba(139, 76, 26, 0.04);
-    --row-even: rgba(232, 216, 222, 0.25);
-    --row-hover: rgba(212, 75, 120, 0.06);
-    --score-color: #1A0A14;
-    --table-header-bg: transparent;
-    --toggle-active-bg: #2C1A24;
-    --toggle-active-text: #FAF5F6;
-    --topbar-bg: linear-gradient(135deg, #3D1A2E 0%, #2C1A24 40%, #1A1028 100%);
-    --topbar-text: #F0E0E6;
-    --topbar-accent: #F28BAD;
-    --divider-accent: var(--accent);
-    --body-gradient: linear-gradient(160deg, #FDF0F2 0%, #FAF5F6 30%, #F5F0F8 100%) fixed;
-}
-
-[data-theme="dark"] {
+:root {
     --bg: #110A0E;
     --text: #DDD0D6;
     --text-secondary: #887880;
@@ -235,35 +200,6 @@ header::after {
     color: var(--topbar-bg);
     box-shadow: none;
     border-color: var(--topbar-accent);
-}
-
-/* ---------- Theme toggle ---------- */
-.theme-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
-    background: transparent;
-    color: var(--topbar-text);
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.theme-toggle:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--topbar-accent);
-    border-color: var(--topbar-accent);
-}
-
-.theme-icon {
-    display: none;
-}
-
-.theme-icon.active {
-    display: block;
 }
 
 /* ---------- Main ---------- */
@@ -891,10 +827,6 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
         display: none;
     }
 
-    .theme-toggle {
-        width: 28px;
-        height: 28px;
-    }
 }
 
 @media (max-width: 380px) {
