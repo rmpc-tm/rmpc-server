@@ -42,51 +42,112 @@
             <p>For more details read the FAQ on <a href="https://openplanet.dev/plugin/randommappace" target="_blank" rel="noopener">Openplanet plugin page</a>.</p>
         </details>
 
-        <div class="controls">
-            <div class="control-group">
-                <div class="toggle-group" id="game-mode-toggle">
-                    <button class="toggle-btn active" data-value="author">Author</button>
-                    <button class="toggle-btn" data-value="gold">Gold</button>
+        <div class="toggle-group view-toggle" id="view-toggle">
+            <button class="toggle-btn active" data-view="leaderboard">Leaderboard</button>
+            <button class="toggle-btn" data-view="hof">Hall of Fame</button>
+        </div>
+
+        <section id="view-leaderboard">
+            <div class="controls">
+                <div class="control-group">
+                    <div class="toggle-group" id="game-mode-toggle">
+                        <button class="toggle-btn active" data-value="author">Author</button>
+                        <button class="toggle-btn" data-value="gold">Gold</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="toggle-group" id="period-toggle">
+                        <button class="toggle-btn active" data-value="all">All Time</button>
+                        <button class="toggle-btn" data-value="month">This Month</button>
+                        <button class="toggle-btn archive-btn" data-value="archive" id="archive-btn"><span class="archive-label">Archive</span><svg class="archive-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
+                    <div class="archive-dropdown" id="archive-dropdown"></div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <div class="toggle-group" id="period-toggle">
-                    <button class="toggle-btn active" data-value="all">All Time</button>
-                    <button class="toggle-btn" data-value="month">This Month</button>
-                    <button class="toggle-btn archive-btn" data-value="archive" id="archive-btn"><span class="archive-label">Archive</span><svg class="archive-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-                </div>
-                <div class="archive-dropdown" id="archive-dropdown"></div>
+            <div id="loading" class="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <span>Loading scores...</span>
             </div>
-        </div>
+            <div id="error" class="error" style="display: none;"></div>
 
-        <div id="loading" class="loading" style="display: none;">
-            <div class="loading-spinner"></div>
-            <span>Loading scores...</span>
-        </div>
-        <div id="error" class="error" style="display: none;"></div>
+            <div class="table-wrap">
+                <table id="leaderboard">
+                    <thead>
+                        <tr>
+                            <th class="col-rank">#</th>
+                            <th class="col-player">Player</th>
+                            <th class="col-maps" data-tooltip="Maps completed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></th>
+                            <th class="col-skipped" data-tooltip="Maps skipped"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></th>
+                            <th class="col-score">Score</th>
+                            <th class="col-date">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                    </tbody>
+                </table>
+            </div>
 
-        <div class="table-wrap">
-            <table id="leaderboard">
-                <thead>
-                    <tr>
-                        <th class="col-rank">#</th>
-                        <th class="col-player">Player</th>
-                        <th class="col-maps" data-tooltip="Maps completed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></th>
-                        <th class="col-skipped" data-tooltip="Maps skipped"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></th>
-                        <th class="col-score">Score</th>
-                        <th class="col-date">Date</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboard-body">
-                </tbody>
-            </table>
-        </div>
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                <p>No scores found for the selected filters.</p>
+            </div>
+        </section>
 
-        <div id="empty-state" class="empty-state" style="display: none;">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-            <p>No scores found for the selected filters.</p>
-        </div>
+        <section id="view-hof" style="display: none;">
+            <div id="hof-loading" class="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <span>Loading hall of fame...</span>
+            </div>
+            <div id="hof-error" class="error" style="display: none;"></div>
+
+            <div class="hof-grid">
+                <div class="hof-column">
+                    <h2 class="hof-heading">Author</h2>
+                    <div class="table-wrap">
+                        <table class="hof-table" id="hof-table-author">
+                            <thead>
+                                <tr>
+                                    <th class="col-rank">#</th>
+                                    <th class="col-player">Player</th>
+                                    <th class="col-medal col-gold" title="Gold (1st)">G</th>
+                                    <th class="col-medal col-silver" title="Silver (2nd)">S</th>
+                                    <th class="col-medal col-bronze" title="Bronze (3rd)">B</th>
+                                    <th class="col-medal col-total" title="Total trophies">Σ</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state hof-empty" style="display: none;">
+                        <p>No trophies awarded yet.</p>
+                    </div>
+                </div>
+
+                <div class="hof-column">
+                    <h2 class="hof-heading">Gold</h2>
+                    <div class="table-wrap">
+                        <table class="hof-table" id="hof-table-gold">
+                            <thead>
+                                <tr>
+                                    <th class="col-rank">#</th>
+                                    <th class="col-player">Player</th>
+                                    <th class="col-medal col-gold" title="Gold (1st)">G</th>
+                                    <th class="col-medal col-silver" title="Silver (2nd)">S</th>
+                                    <th class="col-medal col-bronze" title="Bronze (3rd)">B</th>
+                                    <th class="col-medal col-total" title="Total trophies">Σ</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state hof-empty" style="display: none;">
+                        <p>No trophies awarded yet.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer>
