@@ -865,6 +865,9 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 .hof-table .col-trophies {
     width: 100%;
     text-align: left;
+}
+
+.hof-table tbody .col-trophies {
     padding-left: 0.6rem;
     font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
     font-size: 1.1rem;
