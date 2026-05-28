@@ -3,50 +3,68 @@ package db
 import (
 	"database/sql"
 	"time"
-
-	. "github.com/go-jet/jet/v2/postgres"
-	"github.com/google/uuid"
-
-	"rmpc-server/db/.gen/rmpc/public/enum"
-	"rmpc-server/db/.gen/rmpc/public/model"
-	"rmpc-server/db/.gen/rmpc/public/table"
 )
 
-type MonthlyScoreRow struct {
-	PlayerID     uuid.UUID      `alias:"scores.player_id"`
-	GameMode     model.GameMode `alias:"scores.game_mode"`
-	Score        int32          `alias:"scores.score"`
-	CreatedAt    time.Time      `alias:"scores.created_at"`
-	OpenplanetID string         `alias:"players.openplanet_id"`
-	DisplayName  string         `alias:"players.display_name"`
+type HallOfFameRow struct {
+	OpenplanetID string
+	DisplayName  string
+	Gold         int
+	Silver       int
+	Bronze       int
 }
 
-// GetMonthlyScores returns all (non-banned) scores in the author and gold game
-// modes within [earliest, before). The caller is expected to bucket by month
-// and pick the per-player best in code — the trophy aggregation logic lives in
-// the handler.
-func GetMonthlyScores(db *sql.DB, earliest, before time.Time) ([]MonthlyScoreRow, error) {
-	stmt := SELECT(
-		table.Scores.PlayerID,
-		table.Scores.GameMode,
-		table.Scores.Score,
-		table.Scores.CreatedAt,
-		table.Players.OpenplanetID,
-		table.Players.DisplayName,
-	).FROM(
-		table.Scores.
-			INNER_JOIN(table.Players, table.Players.ID.EQ(table.Scores.PlayerID)).
-			LEFT_JOIN(table.BannedPlayers, table.BannedPlayers.PlayerID.EQ(table.Scores.PlayerID)),
-	).WHERE(
-		table.BannedPlayers.ID.IS_NULL().
-			AND(table.Scores.GameMode.IN(enum.GameMode.Author, enum.GameMode.Gold)).
-			AND(table.Scores.CreatedAt.GT_EQ(TimestampzT(earliest))).
-			AND(table.Scores.CreatedAt.LT(TimestampzT(before))),
-	)
+// GetHallOfFame returns players ranked by trophy count for a single game mode
+// within [earliest, before). For each completed month in the range it awards
+// gold/silver/bronze to the top 3 best-per-player scores, then aggregates per
+// player. Rows come back already sorted by (gold, silver, bronze, name).
+//
+// Banned players are excluded. gameMode must be a valid scores.game_mode value
+// (caller validates).
+func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]HallOfFameRow, error) {
+	const q = `
+WITH best AS (
+    SELECT DISTINCT ON (s.player_id, date_trunc('month', s.created_at))
+        p.openplanet_id,
+        p.display_name,
+        date_trunc('month', s.created_at) AS month_start,
+        s.score
+    FROM scores s
+    INNER JOIN players p ON p.id = s.player_id
+    LEFT  JOIN banned_players b ON b.player_id = s.player_id
+    WHERE b.id IS NULL
+      AND s.game_mode = $1::game_mode
+      AND s.created_at >= $2
+      AND s.created_at <  $3
+    ORDER BY s.player_id, date_trunc('month', s.created_at), s.score DESC
+),
+ranked AS (
+    SELECT openplanet_id, display_name,
+           ROW_NUMBER() OVER (PARTITION BY month_start ORDER BY score DESC) AS rn
+    FROM best
+)
+SELECT openplanet_id, display_name,
+       SUM((rn = 1)::int)::int AS gold,
+       SUM((rn = 2)::int)::int AS silver,
+       SUM((rn = 3)::int)::int AS bronze
+FROM ranked
+WHERE rn <= 3
+GROUP BY openplanet_id, display_name
+ORDER BY gold DESC, silver DESC, bronze DESC, lower(display_name) ASC;
+`
 
-	var rows []MonthlyScoreRow
-	if err := stmt.Query(db, &rows); err != nil {
+	rows, err := db.Query(q, gameMode, earliest, before)
+	if err != nil {
 		return nil, err
 	}
-	return rows, nil
+	defer rows.Close()
+
+	var out []HallOfFameRow
+	for rows.Next() {
+		var r HallOfFameRow
+		if err := rows.Scan(&r.OpenplanetID, &r.DisplayName, &r.Gold, &r.Silver, &r.Bronze); err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
 }

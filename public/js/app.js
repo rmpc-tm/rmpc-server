@@ -9,7 +9,7 @@
 
     var cache = {};
     var fetchGen = 0;
-    var hofCache = null;
+    var hofCache = {};
     var hofFetchGen = 0;
 
     var els = {
@@ -20,6 +20,7 @@
         tableWrap: document.getElementById("leaderboard-wrap"),
         empty: document.getElementById("empty-state"),
         periodToggle: document.getElementById("period-toggle"),
+        periodRow: document.getElementById("period-row"),
         modeToggle: document.getElementById("game-mode-toggle"),
         archiveBtn: document.getElementById("archive-btn"),
         archiveDropdown: document.getElementById("archive-dropdown"),
@@ -282,15 +283,16 @@
 
     // --- Hall of Fame ---
     function fetchHallOfFame() {
-        if (hofCache) {
-            renderHof(hofCache);
+        var mode = state.gameMode;
+        if (hofCache[mode]) {
+            renderHof(hofCache[mode]);
             return;
         }
 
         showLoading();
 
         var gen = ++hofFetchGen;
-        fetch("api/halloffame")
+        fetch("api/halloffame?game_mode=" + encodeURIComponent(mode))
             .then(function (res) {
                 if (!res.ok) {
                     throw new Error("request");
@@ -299,7 +301,7 @@
             })
             .then(function (data) {
                 if (gen !== hofFetchGen) return;
-                hofCache = data;
+                hofCache[mode] = data;
                 renderHof(data);
             })
             .catch(function (err) {
@@ -318,15 +320,7 @@
         els.tableWrap.style.display = "none";
         els.empty.style.display = "none";
 
-        var modes = (data && data.modes) || [];
-        var entries = [];
-        for (var i = 0; i < modes.length; i++) {
-            if (modes[i].game_mode === state.gameMode) {
-                entries = modes[i].entries || [];
-                break;
-            }
-        }
-
+        var entries = (data && data.entries) || [];
         els.hofBody.innerHTML = "";
 
         if (entries.length === 0) {
@@ -338,8 +332,8 @@
         els.hofWrap.style.display = "";
         els.hofEmpty.style.display = "none";
 
-        for (var j = 0; j < entries.length; j++) {
-            var e = entries[j];
+        for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + escapeHtml(String(e.rank)) + "</td>" +
@@ -353,7 +347,7 @@
     }
 
     function setActiveToggle(value) {
-        var buttons = els.periodToggle.querySelectorAll(".toggle-btn");
+        var buttons = els.periodRow.querySelectorAll(".toggle-btn");
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle("active", buttons[i].getAttribute("data-value") === value);
         }
@@ -428,7 +422,7 @@
         }
     });
 
-    els.periodToggle.addEventListener("click", function (e) {
+    els.periodRow.addEventListener("click", function (e) {
         var btn = e.target.closest(".toggle-btn");
         if (!btn) return;
 
