@@ -840,37 +840,7 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
     }
 }
 
-/* ---------- View toggle (Leaderboard / Hall of Fame) ---------- */
-.view-toggle {
-    margin: 0 auto 1.25rem;
-    width: max-content;
-}
-
-.view-toggle .toggle-btn {
-    padding: 0.4rem 0.95rem;
-    font-size: 0.7rem;
-}
-
-/* ---------- Hall of Fame ---------- */
-.hof-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    align-items: start;
-}
-
-.hof-heading {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.35rem;
-    border-bottom: 1px solid var(--border);
-}
-
+/* ---------- Hall of Fame table ---------- */
 .hof-table .col-medal {
     width: 2.4rem;
     text-align: center;
@@ -899,15 +869,4 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 
 .hof-table tbody .col-total {
     color: var(--score-color);
-}
-
-.hof-empty {
-    padding: 2rem 1rem;
-}
-
-@media (max-width: 720px) {
-    .hof-grid {
-        grid-template-columns: 1fr;
-        gap: 1.75rem;
-    }
 }

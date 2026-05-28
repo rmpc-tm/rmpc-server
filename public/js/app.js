@@ -1,10 +1,8 @@
 (function () {
     "use strict";
 
-    // view: "leaderboard" | "hof"
-    // month: "" = all time, "current" = this month, "YYYY-MM" = specific archive month
+    // month: "" = all time, "current" = this month, "YYYY-MM" = archive, "hof" = hall of fame
     var state = {
-        view: "leaderboard",
         gameMode: "author",
         month: ""
     };
@@ -19,18 +17,15 @@
         loading: document.getElementById("loading"),
         error: document.getElementById("error"),
         table: document.getElementById("leaderboard"),
+        tableWrap: document.getElementById("leaderboard-wrap"),
         empty: document.getElementById("empty-state"),
         periodToggle: document.getElementById("period-toggle"),
         modeToggle: document.getElementById("game-mode-toggle"),
         archiveBtn: document.getElementById("archive-btn"),
         archiveDropdown: document.getElementById("archive-dropdown"),
-        viewToggle: document.getElementById("view-toggle"),
-        viewLeaderboard: document.getElementById("view-leaderboard"),
-        viewHof: document.getElementById("view-hof"),
-        hofLoading: document.getElementById("hof-loading"),
-        hofError: document.getElementById("hof-error"),
-        hofTableAuthor: document.getElementById("hof-table-author"),
-        hofTableGold: document.getElementById("hof-table-gold")
+        hofWrap: document.getElementById("hof-wrap"),
+        hofBody: document.getElementById("hof-body"),
+        hofEmpty: document.getElementById("hof-empty")
     };
 
     // --- Activity chart ---
@@ -111,16 +106,24 @@
         });
     }
 
-    function showLoading() {
-        els.loading.style.display = "flex";
-        els.table.style.display = "none";
+    function hideAllViews() {
+        els.tableWrap.style.display = "none";
         els.empty.style.display = "none";
+        els.hofWrap.style.display = "none";
+        els.hofEmpty.style.display = "none";
         els.error.style.display = "none";
+    }
+
+    function showLoading() {
+        els.loading.querySelector("span").textContent =
+            state.month === "hof" ? "Loading hall of fame..." : "Loading scores...";
+        els.loading.style.display = "flex";
+        hideAllViews();
     }
 
     function showError(msg) {
         els.loading.style.display = "none";
-        els.table.style.display = "none";
+        hideAllViews();
         els.error.style.display = "block";
         els.error.textContent = msg;
     }
@@ -186,6 +189,14 @@
         }
     }
 
+    function fetchData() {
+        if (state.month === "hof") {
+            fetchHallOfFame();
+        } else {
+            fetchLeaderboard();
+        }
+    }
+
     function fetchLeaderboard() {
         var resolved = resolveMonth();
         var key = state.gameMode + ":" + resolved;
@@ -229,16 +240,18 @@
     function render(data) {
         els.loading.style.display = "none";
         els.error.style.display = "none";
+        els.hofWrap.style.display = "none";
+        els.hofEmpty.style.display = "none";
 
         var scores = data.scores || [];
 
         if (scores.length === 0) {
-            els.table.style.display = "none";
+            els.tableWrap.style.display = "none";
             els.empty.style.display = "flex";
             return;
         }
 
-        els.table.style.display = "table";
+        els.tableWrap.style.display = "";
         els.empty.style.display = "none";
 
         els.body.innerHTML = "";
@@ -268,34 +281,13 @@
     }
 
     // --- Hall of Fame ---
-    function showView(name) {
-        state.view = name;
-        els.viewLeaderboard.style.display = (name === "leaderboard") ? "" : "none";
-        els.viewHof.style.display = (name === "hof") ? "" : "none";
-        var buttons = els.viewToggle.querySelectorAll(".toggle-btn");
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].classList.toggle("active", buttons[i].getAttribute("data-view") === name);
-        }
-    }
-
-    function showHofLoading() {
-        els.hofLoading.style.display = "flex";
-        els.hofError.style.display = "none";
-    }
-
-    function showHofError(msg) {
-        els.hofLoading.style.display = "none";
-        els.hofError.style.display = "block";
-        els.hofError.textContent = msg;
-    }
-
     function fetchHallOfFame() {
         if (hofCache) {
             renderHof(hofCache);
             return;
         }
 
-        showHofLoading();
+        showLoading();
 
         var gen = ++hofFetchGen;
         fetch("api/halloffame")
@@ -313,53 +305,41 @@
             .catch(function (err) {
                 if (gen !== hofFetchGen) return;
                 if (err.message === "request") {
-                    showHofError("Failed to load hall of fame. Please try again later.");
+                    showError("Failed to load hall of fame. Please try again later.");
                 } else {
-                    showHofError("Something went wrong while reading the response.");
+                    showError("Something went wrong while reading the response.");
                 }
             });
     }
 
     function renderHof(data) {
-        els.hofLoading.style.display = "none";
-        els.hofError.style.display = "none";
-
-        var tables = {
-            author: els.hofTableAuthor,
-            gold: els.hofTableGold
-        };
+        els.loading.style.display = "none";
+        els.error.style.display = "none";
+        els.tableWrap.style.display = "none";
+        els.empty.style.display = "none";
 
         var modes = (data && data.modes) || [];
-        // Ensure both modes render even if backend returns only one
-        var seen = {};
+        var entries = [];
         for (var i = 0; i < modes.length; i++) {
-            seen[modes[i].game_mode] = true;
-            renderHofMode(tables[modes[i].game_mode], modes[i].entries || []);
+            if (modes[i].game_mode === state.gameMode) {
+                entries = modes[i].entries || [];
+                break;
+            }
         }
-        if (!seen.author) renderHofMode(tables.author, []);
-        if (!seen.gold) renderHofMode(tables.gold, []);
-    }
 
-    function renderHofMode(table, entries) {
-        if (!table) return;
-        var tbody = table.querySelector("tbody");
-        var column = table.closest(".hof-column");
-        var wrap = table.closest(".table-wrap");
-        var empty = column ? column.querySelector(".hof-empty") : null;
-
-        tbody.innerHTML = "";
+        els.hofBody.innerHTML = "";
 
         if (entries.length === 0) {
-            if (wrap) wrap.style.display = "none";
-            if (empty) empty.style.display = "flex";
+            els.hofWrap.style.display = "none";
+            els.hofEmpty.style.display = "flex";
             return;
         }
 
-        if (wrap) wrap.style.display = "";
-        if (empty) empty.style.display = "none";
+        els.hofWrap.style.display = "";
+        els.hofEmpty.style.display = "none";
 
-        for (var i = 0; i < entries.length; i++) {
-            var e = entries[i];
+        for (var j = 0; j < entries.length; j++) {
+            var e = entries[j];
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + escapeHtml(String(e.rank)) + "</td>" +
@@ -368,7 +348,7 @@
                 '<td class="col-medal col-silver">' + escapeHtml(String(e.silver)) + "</td>" +
                 '<td class="col-medal col-bronze">' + escapeHtml(String(e.bronze)) + "</td>" +
                 '<td class="col-medal col-total">' + escapeHtml(String(e.total)) + "</td>";
-            tbody.appendChild(tr);
+            els.hofBody.appendChild(tr);
         }
     }
 
@@ -385,10 +365,6 @@
 
     // --- Hash routing ---
     function pushHash() {
-        if (state.view === "hof") {
-            history.replaceState(null, "", "#hof");
-            return;
-        }
         var h = state.gameMode;
         if (state.month) {
             h += "/" + state.month;
@@ -410,6 +386,9 @@
         } else if (state.month === "current") {
             setActiveToggle("month");
             resetArchiveLabel();
+        } else if (state.month === "hof") {
+            setActiveToggle("hof");
+            resetArchiveLabel();
         } else {
             setActiveToggle("archive");
             var parts = state.month.split("-");
@@ -420,12 +399,6 @@
     function applyHash() {
         var hash = location.hash.replace(/^#/, "");
         closeArchiveDropdown();
-
-        if (hash === "hof") {
-            showView("hof");
-            fetchHallOfFame();
-            return;
-        }
 
         if (!hash) {
             state.gameMode = "author";
@@ -440,38 +413,18 @@
             }
             state.month = segments[1] || "";
         }
-        showView("leaderboard");
         syncUI();
-        fetchLeaderboard();
+        fetchData();
     }
 
     // Event listeners
-    els.viewToggle.addEventListener("click", function (e) {
-        var btn = e.target.closest(".toggle-btn");
-        if (!btn || btn.classList.contains("active")) return;
-        var v = btn.getAttribute("data-view");
-        closeArchiveDropdown();
-        if (v === "hof") {
-            state.view = "hof";
-            showView("hof");
-            pushHash();
-            fetchHallOfFame();
-        } else {
-            state.view = "leaderboard";
-            showView("leaderboard");
-            pushHash();
-            syncUI();
-            fetchLeaderboard();
-        }
-    });
-
     els.modeToggle.addEventListener("click", function (e) {
         if (e.target.classList.contains("toggle-btn") && !e.target.classList.contains("active")) {
             state.gameMode = e.target.getAttribute("data-value");
             closeArchiveDropdown();
             pushHash();
             syncUI();
-            fetchLeaderboard();
+            fetchData();
         }
     });
 
@@ -496,11 +449,13 @@
             state.month = "";
         } else if (value === "month") {
             state.month = "current";
+        } else if (value === "hof") {
+            state.month = "hof";
         }
 
         pushHash();
         syncUI();
-        fetchLeaderboard();
+        fetchData();
     });
 
     els.archiveDropdown.addEventListener("click", function (e) {
@@ -512,7 +467,7 @@
         pushHash();
         syncUI();
         updateArchiveSelection();
-        fetchLeaderboard();
+        fetchData();
     });
 
     document.addEventListener("click", function (e) {
