@@ -34,6 +34,10 @@ type hofResponse struct {
 	Entries  []hofEntryJSON `json:"entries"`
 }
 
+// HoF starts one month after the leaderboard's earliest — the UI archive
+// dropdown hides the pre-launch month, so trophies aren't awarded there.
+var hofEarliestMonth = leaderboardEarliestMonth.AddDate(0, 1, 0)
+
 func HallOfFame(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		response.Error(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -56,10 +60,7 @@ func HallOfFame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// HoF starts one month later than the leaderboard's earliest — the UI archive
-	// dropdown hides the pre-launch month, so trophies shouldn't be awarded there.
-	hofEarliest := leaderboardEarliestMonth.AddDate(0, 1, 0)
-	rows, err := db.GetHallOfFame(database, query.GameMode, hofEarliest, currentMonth)
+	rows, err := db.GetHallOfFame(database, query.GameMode, hofEarliestMonth, currentMonth)
 	if err != nil {
 		slog.Error("hall of fame query error", "error", err)
 		response.Error(w, http.StatusServiceUnavailable, "service unavailable")

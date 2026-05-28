@@ -403,6 +403,22 @@ main {
     color: var(--toggle-active-text);
 }
 
+.archive-dropdown .month-tag {
+    margin-left: 0.4rem;
+    padding: 0 0.3rem;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+}
+
+.archive-dropdown button.selected .month-tag {
+    color: var(--toggle-active-text);
+    border-color: var(--toggle-active-text);
+}
+
 /* ---------- Table ---------- */
 .table-wrap {
     border: none;

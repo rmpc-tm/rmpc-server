@@ -148,7 +148,8 @@
         var now = new Date();
         var curY = now.getUTCFullYear();
         var curM = now.getUTCMonth() + 1;
-        // Go back from previous month to Dec 2025
+        // Current month first, then previous months back to Dec 2025
+        months.push({ key: "current", label: formatMonthLabel(curY, curM), current: true });
         var y = curY;
         var m = curM - 1;
         if (m === 0) { m = 12; y--; }
@@ -167,7 +168,11 @@
         for (var i = 0; i < months.length; i++) {
             var btn = document.createElement("button");
             btn.setAttribute("data-month", months[i].key);
-            btn.textContent = months[i].label;
+            if (months[i].current) {
+                btn.innerHTML = escapeHtml(months[i].label) + ' <span class="month-tag">Current</span>';
+            } else {
+                btn.textContent = months[i].label;
+            }
             els.archiveDropdown.appendChild(btn);
         }
     }
@@ -361,7 +366,7 @@
     }
 
     function resetArchiveLabel() {
-        els.archiveBtn.querySelector(".archive-label").textContent = "Archive";
+        els.archiveBtn.querySelector(".archive-label").textContent = "Month";
     }
 
     // --- Hash routing ---
@@ -384,15 +389,13 @@
         if (state.month === "") {
             setActiveToggle("all");
             resetArchiveLabel();
-        } else if (state.month === "current") {
-            setActiveToggle("month");
-            resetArchiveLabel();
         } else if (state.month === "hof") {
             setActiveToggle("hof");
             resetArchiveLabel();
         } else {
             setActiveToggle("archive");
-            var parts = state.month.split("-");
+            var monthKey = state.month === "current" ? getCurrentMonth() : state.month;
+            var parts = monthKey.split("-");
             els.archiveBtn.querySelector(".archive-label").textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
         }
     }
@@ -448,8 +451,6 @@
 
         if (value === "all") {
             state.month = "";
-        } else if (value === "month") {
-            state.month = "current";
         } else if (value === "hof") {
             state.month = "hof";
         }

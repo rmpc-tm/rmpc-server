@@ -23,11 +23,12 @@ type HallOfFameRow struct {
 func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]HallOfFameRow, error) {
 	const q = `
 WITH best AS (
-    SELECT DISTINCT ON (s.player_id, date_trunc('month', s.created_at))
+    SELECT DISTINCT ON (s.player_id, date_trunc('month', s.created_at AT TIME ZONE 'UTC'))
         p.openplanet_id,
         p.display_name,
-        date_trunc('month', s.created_at) AS month_start,
-        s.score
+        date_trunc('month', s.created_at AT TIME ZONE 'UTC') AS month_start,
+        s.score,
+        s.created_at
     FROM scores s
     INNER JOIN players p ON p.id = s.player_id
     LEFT  JOIN banned_players b ON b.player_id = s.player_id
@@ -35,17 +36,23 @@ WITH best AS (
       AND s.game_mode = $1::game_mode
       AND s.created_at >= $2
       AND s.created_at <  $3
-    ORDER BY s.player_id, date_trunc('month', s.created_at), s.score DESC
+    ORDER BY s.player_id,
+             date_trunc('month', s.created_at AT TIME ZONE 'UTC'),
+             s.score DESC,
+             s.created_at ASC
 ),
 ranked AS (
     SELECT openplanet_id, display_name,
-           ROW_NUMBER() OVER (PARTITION BY month_start ORDER BY score DESC) AS rn
+           ROW_NUMBER() OVER (
+               PARTITION BY month_start
+               ORDER BY score DESC, created_at ASC
+           ) AS rn
     FROM best
 )
 SELECT openplanet_id, display_name,
-       SUM((rn = 1)::int)::int AS gold,
-       SUM((rn = 2)::int)::int AS silver,
-       SUM((rn = 3)::int)::int AS bronze
+       SUM((rn = 1)::int) AS gold,
+       SUM((rn = 2)::int) AS silver,
+       SUM((rn = 3)::int) AS bronze
 FROM ranked
 WHERE rn <= 3
 GROUP BY openplanet_id, display_name
