@@ -47,9 +47,7 @@ func HallOfFame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now().UTC()
-	// TEMP: include the in-progress current month for testing — revert by
-	// dropping AddDate(0, 1, 0) so the upper bound is this month's first day.
-	currentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC).AddDate(0, 1, 0)
+	currentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 
 	database, err := db.GetDB()
 	if err != nil {

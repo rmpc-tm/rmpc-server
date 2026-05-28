@@ -851,14 +851,6 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 .toggle-btn.nav-btn {
     margin-left: 0;
     border-radius: 3px;
-    border-color: var(--topbar-accent);
-    color: var(--topbar-accent);
-}
-
-.toggle-btn.nav-btn:hover:not(.active) {
-    border-color: var(--topbar-accent);
-    color: var(--text);
-    background: var(--accent-glow);
 }
 
 /* ---------- Hall of Fame table ---------- */
