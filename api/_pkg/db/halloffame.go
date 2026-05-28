@@ -32,20 +32,18 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 
 	month := DATE_TRUNC(MONTH, table.Scores.CreatedAt, "UTC")
 
-	// Dedup: ROW_NUMBER() over (player, month) ordered by score gives us each
-	// player's best score per month (rn = 1). Using window function here
-	// because jet's DISTINCT ON only accepts plain columns, not date_trunc.
-	dedupRN := ROW_NUMBER().OVER(
-		PARTITION_BY(table.Scores.PlayerID, month).
-			ORDER_BY(table.Scores.Score.DESC(), table.Scores.CreatedAt.ASC()),
+	// One pass: GROUP BY collapses each player's monthly scores into a single
+	// row (their best for that month); the window function then ranks players
+	// within the month using those aggregates. Window functions run after
+	// GROUP BY, so MAX/MIN are valid inside ORDER BY.
+	rn := ROW_NUMBER().OVER(
+		PARTITION_BY(month).
+			ORDER_BY(MAX(table.Scores.Score).DESC(), MIN(table.Scores.CreatedAt).ASC()),
 	)
-	dedup := SELECT(
+	monthly := SELECT(
 		table.Players.OpenplanetID,
 		table.Players.DisplayName,
-		month.AS("month_start"),
-		table.Scores.Score,
-		table.Scores.CreatedAt,
-		dedupRN.AS("player_month_rn"),
+		rn.AS("rn"),
 	).FROM(
 		table.Scores.
 			INNER_JOIN(table.Players, table.Players.ID.EQ(table.Scores.PlayerID)).
@@ -55,54 +53,39 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 			AND(table.Scores.GameMode.EQ(modeExpr)).
 			AND(table.Scores.CreatedAt.GT_EQ(TimestampzT(earliest))).
 			AND(table.Scores.CreatedAt.LT(TimestampzT(before))),
-	).AsTable("dedup")
+	).GROUP_BY(
+		table.Players.OpenplanetID,
+		table.Players.DisplayName,
+		month,
+	).AsTable("monthly")
 
-	dOpenplanetID := table.Players.OpenplanetID.From(dedup)
-	dDisplayName := table.Players.DisplayName.From(dedup)
-	dScore := table.Scores.Score.From(dedup)
-	dCreatedAt := table.Scores.CreatedAt.From(dedup)
-	dMonthStart := TimestampzColumn("month_start").From(dedup)
-	dPlayerMonthRN := IntegerColumn("player_month_rn").From(dedup)
+	mOpenplanetID := table.Players.OpenplanetID.From(monthly)
+	mDisplayName := table.Players.DisplayName.From(monthly)
+	mRN := IntegerColumn("rn").From(monthly)
 
-	// Rank players within each month (only the per-player best rows from dedup).
-	rankRN := ROW_NUMBER().OVER(
-		PARTITION_BY(dMonthStart).
-			ORDER_BY(dScore.DESC(), dCreatedAt.ASC()),
-	)
-	ranked := SELECT(
-		dOpenplanetID,
-		dDisplayName,
-		rankRN.AS("rn"),
-	).FROM(dedup).WHERE(
-		dPlayerMonthRN.EQ(Int(1)),
-	).AsTable("ranked")
-
-	rOpenplanetID := dOpenplanetID.From(ranked)
-	rDisplayName := dDisplayName.From(ranked)
-	rRN := IntegerColumn("rn").From(ranked)
-
-	// Tally trophies — equivalent to (rn = N)::int + SUM. The explicit cast
-	// gives Postgres a typed argument; without it the SUM input is inferred as text.
-	gold := SUM(CAST(rRN.EQ(Int(1))).AS_INTEGER())
-	silver := SUM(CAST(rRN.EQ(Int(2))).AS_INTEGER())
-	bronze := SUM(CAST(rRN.EQ(Int(3))).AS_INTEGER())
+	// Tally trophies. COUNT ignores NULLs, so the CASE returns 1 for matches
+	// and NULL (no ELSE) otherwise — equivalent to COUNT(*) FILTER (WHERE rn = N),
+	// which jet doesn't expose.
+	gold := COUNT(CASE().WHEN(mRN.EQ(Int(1))).THEN(Int(1)))
+	silver := COUNT(CASE().WHEN(mRN.EQ(Int(2))).THEN(Int(1)))
+	bronze := COUNT(CASE().WHEN(mRN.EQ(Int(3))).THEN(Int(1)))
 
 	stmt := SELECT(
-		rOpenplanetID,
-		rDisplayName,
+		mOpenplanetID,
+		mDisplayName,
 		gold.AS("trophies.gold"),
 		silver.AS("trophies.silver"),
 		bronze.AS("trophies.bronze"),
-	).FROM(ranked).WHERE(
-		rRN.LT_EQ(Int(3)),
+	).FROM(monthly).WHERE(
+		mRN.LT_EQ(Int(3)),
 	).GROUP_BY(
-		rOpenplanetID,
-		rDisplayName,
+		mOpenplanetID,
+		mDisplayName,
 	).ORDER_BY(
 		gold.DESC(),
 		silver.DESC(),
 		bronze.DESC(),
-		LOWER(rDisplayName).ASC(),
+		LOWER(mDisplayName).ASC(),
 	)
 
 	var entries []HallOfFameRow
