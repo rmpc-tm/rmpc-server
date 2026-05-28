@@ -334,16 +334,23 @@
 
         for (var i = 0; i < entries.length; i++) {
             var e = entries[i];
+            var trophies =
+                repeat("🥇", e.gold) +   // 🥇
+                repeat("🥈", e.silver) + // 🥈
+                repeat("🥉", e.bronze);  // 🥉
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + escapeHtml(String(e.rank)) + "</td>" +
                 '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(e.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(e.player.display_name) + "</a></td>" +
-                '<td class="col-medal col-gold">' + escapeHtml(String(e.gold)) + "</td>" +
-                '<td class="col-medal col-silver">' + escapeHtml(String(e.silver)) + "</td>" +
-                '<td class="col-medal col-bronze">' + escapeHtml(String(e.bronze)) + "</td>" +
-                '<td class="col-medal col-total">' + escapeHtml(String(e.total)) + "</td>";
+                '<td class="col-trophies">' + trophies + "</td>";
             els.hofBody.appendChild(tr);
         }
+    }
+
+    function repeat(s, n) {
+        var out = "";
+        for (var i = 0; i < n; i++) out += s;
+        return out;
     }
 
     function setActiveToggle(value) {

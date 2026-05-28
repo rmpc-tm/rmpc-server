@@ -450,58 +450,58 @@ tbody tr:nth-child(even):hover {
     background: var(--row-hover);
 }
 
-/* Podium rows — left accent stripe */
-tbody tr:nth-child(1) {
+/* Podium rows — left accent stripe (leaderboard only; HoF ranks can be joint) */
+#leaderboard tbody tr:nth-child(1) {
     background: var(--rank-gold-bg);
     font-size: 1rem;
     box-shadow: inset 3px 0 0 var(--rank-gold);
 }
-tbody tr:nth-child(1) td {
+#leaderboard tbody tr:nth-child(1) td {
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
 }
-tbody tr:nth-child(1) .col-rank {
+#leaderboard tbody tr:nth-child(1) .col-rank {
     font-size: 0.95rem;
 }
-tbody tr:nth-child(1) .col-score {
+#leaderboard tbody tr:nth-child(1) .col-score {
     font-size: 1rem;
 }
 
-tbody tr:nth-child(2) {
+#leaderboard tbody tr:nth-child(2) {
     background: var(--rank-silver-bg);
     font-size: 0.94rem;
     box-shadow: inset 3px 0 0 var(--rank-silver);
 }
-tbody tr:nth-child(2) td {
+#leaderboard tbody tr:nth-child(2) td {
     padding-top: 0.65rem;
     padding-bottom: 0.65rem;
 }
-tbody tr:nth-child(2) .col-rank {
+#leaderboard tbody tr:nth-child(2) .col-rank {
     font-size: 0.9rem;
 }
-tbody tr:nth-child(2) .col-score {
+#leaderboard tbody tr:nth-child(2) .col-score {
     font-size: 0.96rem;
 }
 
-tbody tr:nth-child(3) {
+#leaderboard tbody tr:nth-child(3) {
     background: var(--rank-bronze-bg);
     font-size: 0.9rem;
     box-shadow: inset 3px 0 0 var(--rank-bronze);
 }
-tbody tr:nth-child(3) td {
+#leaderboard tbody tr:nth-child(3) td {
     padding-top: 0.6rem;
     padding-bottom: 0.6rem;
 }
-tbody tr:nth-child(3) .col-rank {
+#leaderboard tbody tr:nth-child(3) .col-rank {
     font-size: 0.88rem;
 }
-tbody tr:nth-child(3) .col-score {
+#leaderboard tbody tr:nth-child(3) .col-score {
     font-size: 0.92rem;
 }
 
-tbody tr:nth-child(1):hover,
-tbody tr:nth-child(2):hover,
-tbody tr:nth-child(3):hover {
+#leaderboard tbody tr:nth-child(1):hover,
+#leaderboard tbody tr:nth-child(2):hover,
+#leaderboard tbody tr:nth-child(3):hover {
     background: var(--row-hover);
 }
 
@@ -523,15 +523,15 @@ tbody .col-rank {
     color: var(--text-secondary);
 }
 
-tbody tr:nth-child(1) .col-rank {
+#leaderboard tbody tr:nth-child(1) .col-rank {
     color: var(--rank-gold);
     font-weight: 700;
 }
-tbody tr:nth-child(2) .col-rank {
+#leaderboard tbody tr:nth-child(2) .col-rank {
     color: var(--rank-silver);
     font-weight: 700;
 }
-tbody tr:nth-child(3) .col-rank {
+#leaderboard tbody tr:nth-child(3) .col-rank {
     color: var(--rank-bronze);
     font-weight: 700;
 }
@@ -862,32 +862,17 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 }
 
 /* ---------- Hall of Fame table ---------- */
-.hof-table .col-medal {
-    width: 2.4rem;
-    text-align: center;
-    font-family: 'IBM Plex Mono', monospace;
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    padding-left: 0.3rem;
-    padding-right: 0.3rem;
+.hof-table .col-trophies {
+    width: 100%;
+    text-align: left;
+    padding-left: 0.6rem;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-size: 1.1rem;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    white-space: normal;
 }
 
-.hof-table thead .col-medal {
-    text-align: center;
-}
-
-.hof-table tbody .col-gold {
-    color: var(--rank-gold);
-}
-
-.hof-table tbody .col-silver {
-    color: var(--rank-silver);
-}
-
-.hof-table tbody .col-bronze {
-    color: var(--rank-bronze);
-}
-
-.hof-table tbody .col-total {
-    color: var(--score-color);
+.hof-table .col-player {
+    width: auto;
 }
