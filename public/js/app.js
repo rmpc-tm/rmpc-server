@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    // month: "" = all time, "current" = this month, "YYYY-MM" = specific archive month
+    // month: "" = all time, "current" = this month, "YYYY-MM" = archive, "hof" = hall of fame
     var state = {
         gameMode: "author",
         month: ""
@@ -9,17 +9,24 @@
 
     var cache = {};
     var fetchGen = 0;
+    var hofCache = {};
+    var hofFetchGen = 0;
 
     var els = {
         body: document.getElementById("leaderboard-body"),
         loading: document.getElementById("loading"),
         error: document.getElementById("error"),
         table: document.getElementById("leaderboard"),
+        tableWrap: document.getElementById("leaderboard-wrap"),
         empty: document.getElementById("empty-state"),
         periodToggle: document.getElementById("period-toggle"),
+        periodRow: document.getElementById("period-row"),
         modeToggle: document.getElementById("game-mode-toggle"),
         archiveBtn: document.getElementById("archive-btn"),
-        archiveDropdown: document.getElementById("archive-dropdown")
+        archiveDropdown: document.getElementById("archive-dropdown"),
+        hofWrap: document.getElementById("hof-wrap"),
+        hofBody: document.getElementById("hof-body"),
+        hofEmpty: document.getElementById("hof-empty")
     };
 
     // --- Activity chart ---
@@ -100,16 +107,24 @@
         });
     }
 
-    function showLoading() {
-        els.loading.style.display = "flex";
-        els.table.style.display = "none";
+    function hideAllViews() {
+        els.tableWrap.style.display = "none";
         els.empty.style.display = "none";
+        els.hofWrap.style.display = "none";
+        els.hofEmpty.style.display = "none";
         els.error.style.display = "none";
+    }
+
+    function showLoading() {
+        els.loading.querySelector("span").textContent =
+            state.month === "hof" ? "Loading hall of fame..." : "Loading scores...";
+        els.loading.style.display = "flex";
+        hideAllViews();
     }
 
     function showError(msg) {
         els.loading.style.display = "none";
-        els.table.style.display = "none";
+        hideAllViews();
         els.error.style.display = "block";
         els.error.textContent = msg;
     }
@@ -133,7 +148,8 @@
         var now = new Date();
         var curY = now.getUTCFullYear();
         var curM = now.getUTCMonth() + 1;
-        // Go back from previous month to Dec 2025
+        // Current month first, then previous months back to Dec 2025
+        months.push({ key: "current", label: formatMonthLabel(curY, curM), current: true });
         var y = curY;
         var m = curM - 1;
         if (m === 0) { m = 12; y--; }
@@ -152,7 +168,11 @@
         for (var i = 0; i < months.length; i++) {
             var btn = document.createElement("button");
             btn.setAttribute("data-month", months[i].key);
-            btn.textContent = months[i].label;
+            if (months[i].current) {
+                btn.innerHTML = escapeHtml(months[i].label) + ' <span class="month-tag">Current</span>';
+            } else {
+                btn.textContent = months[i].label;
+            }
             els.archiveDropdown.appendChild(btn);
         }
     }
@@ -172,6 +192,14 @@
         var resolved = resolveMonth();
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle("selected", buttons[i].getAttribute("data-month") === resolved);
+        }
+    }
+
+    function fetchData() {
+        if (state.month === "hof") {
+            fetchHallOfFame();
+        } else {
+            fetchLeaderboard();
         }
     }
 
@@ -218,16 +246,18 @@
     function render(data) {
         els.loading.style.display = "none";
         els.error.style.display = "none";
+        els.hofWrap.style.display = "none";
+        els.hofEmpty.style.display = "none";
 
         var scores = data.scores || [];
 
         if (scores.length === 0) {
-            els.table.style.display = "none";
+            els.tableWrap.style.display = "none";
             els.empty.style.display = "flex";
             return;
         }
 
-        els.table.style.display = "table";
+        els.tableWrap.style.display = "";
         els.empty.style.display = "none";
 
         els.body.innerHTML = "";
@@ -256,15 +286,87 @@
         return escapeEl.innerHTML;
     }
 
+    // --- Hall of Fame ---
+    function fetchHallOfFame() {
+        var mode = state.gameMode;
+        if (hofCache[mode]) {
+            renderHof(hofCache[mode]);
+            return;
+        }
+
+        showLoading();
+
+        var gen = ++hofFetchGen;
+        fetch("api/halloffame?game_mode=" + encodeURIComponent(mode))
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error("request");
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                if (gen !== hofFetchGen) return;
+                hofCache[mode] = data;
+                renderHof(data);
+            })
+            .catch(function (err) {
+                if (gen !== hofFetchGen) return;
+                if (err.message === "request") {
+                    showError("Failed to load hall of fame. Please try again later.");
+                } else {
+                    showError("Something went wrong while reading the response.");
+                }
+            });
+    }
+
+    function renderHof(data) {
+        els.loading.style.display = "none";
+        els.error.style.display = "none";
+        els.tableWrap.style.display = "none";
+        els.empty.style.display = "none";
+
+        var entries = (data && data.entries) || [];
+        els.hofBody.innerHTML = "";
+
+        if (entries.length === 0) {
+            els.hofWrap.style.display = "none";
+            els.hofEmpty.style.display = "flex";
+            return;
+        }
+
+        els.hofWrap.style.display = "";
+        els.hofEmpty.style.display = "none";
+
+        for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
+            var trophies =
+                repeat("🥇", e.gold) +   // 🥇
+                repeat("🥈", e.silver) + // 🥈
+                repeat("🥉", e.bronze);  // 🥉
+            var tr = document.createElement("tr");
+            tr.innerHTML =
+                '<td class="col-rank">' + escapeHtml(String(e.rank)) + "</td>" +
+                '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(e.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(e.player.display_name) + "</a></td>" +
+                '<td class="col-trophies">' + trophies + "</td>";
+            els.hofBody.appendChild(tr);
+        }
+    }
+
+    function repeat(s, n) {
+        var out = "";
+        for (var i = 0; i < n; i++) out += s;
+        return out;
+    }
+
     function setActiveToggle(value) {
-        var buttons = els.periodToggle.querySelectorAll(".toggle-btn");
+        var buttons = els.periodRow.querySelectorAll(".toggle-btn");
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle("active", buttons[i].getAttribute("data-value") === value);
         }
     }
 
     function resetArchiveLabel() {
-        els.archiveBtn.querySelector(".archive-label").textContent = "Archive";
+        els.archiveBtn.querySelector(".archive-label").textContent = "Month";
     }
 
     // --- Hash routing ---
@@ -287,18 +389,21 @@
         if (state.month === "") {
             setActiveToggle("all");
             resetArchiveLabel();
-        } else if (state.month === "current") {
-            setActiveToggle("month");
+        } else if (state.month === "hof") {
+            setActiveToggle("hof");
             resetArchiveLabel();
         } else {
             setActiveToggle("archive");
-            var parts = state.month.split("-");
+            var monthKey = state.month === "current" ? getCurrentMonth() : state.month;
+            var parts = monthKey.split("-");
             els.archiveBtn.querySelector(".archive-label").textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
         }
     }
 
     function applyHash() {
         var hash = location.hash.replace(/^#/, "");
+        closeArchiveDropdown();
+
         if (!hash) {
             state.gameMode = "author";
             state.month = "";
@@ -313,8 +418,7 @@
             state.month = segments[1] || "";
         }
         syncUI();
-        closeArchiveDropdown();
-        fetchLeaderboard();
+        fetchData();
     }
 
     // Event listeners
@@ -324,11 +428,11 @@
             closeArchiveDropdown();
             pushHash();
             syncUI();
-            fetchLeaderboard();
+            fetchData();
         }
     });
 
-    els.periodToggle.addEventListener("click", function (e) {
+    els.periodRow.addEventListener("click", function (e) {
         var btn = e.target.closest(".toggle-btn");
         if (!btn) return;
 
@@ -347,13 +451,13 @@
 
         if (value === "all") {
             state.month = "";
-        } else if (value === "month") {
-            state.month = "current";
+        } else if (value === "hof") {
+            state.month = "hof";
         }
 
         pushHash();
         syncUI();
-        fetchLeaderboard();
+        fetchData();
     });
 
     els.archiveDropdown.addEventListener("click", function (e) {
@@ -365,7 +469,7 @@
         pushHash();
         syncUI();
         updateArchiveSelection();
-        fetchLeaderboard();
+        fetchData();
     });
 
     document.addEventListener("click", function (e) {

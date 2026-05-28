@@ -403,6 +403,22 @@ main {
     color: var(--toggle-active-text);
 }
 
+.archive-dropdown .month-tag {
+    margin-left: 0.4rem;
+    padding: 0 0.3rem;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+}
+
+.archive-dropdown button.selected .month-tag {
+    color: var(--toggle-active-text);
+    border-color: var(--toggle-active-text);
+}
+
 /* ---------- Table ---------- */
 .table-wrap {
     border: none;
@@ -450,58 +466,58 @@ tbody tr:nth-child(even):hover {
     background: var(--row-hover);
 }
 
-/* Podium rows — left accent stripe */
-tbody tr:nth-child(1) {
+/* Podium rows — left accent stripe (leaderboard only; HoF ranks can be joint) */
+#leaderboard tbody tr:nth-child(1) {
     background: var(--rank-gold-bg);
     font-size: 1rem;
     box-shadow: inset 3px 0 0 var(--rank-gold);
 }
-tbody tr:nth-child(1) td {
+#leaderboard tbody tr:nth-child(1) td {
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
 }
-tbody tr:nth-child(1) .col-rank {
+#leaderboard tbody tr:nth-child(1) .col-rank {
     font-size: 0.95rem;
 }
-tbody tr:nth-child(1) .col-score {
+#leaderboard tbody tr:nth-child(1) .col-score {
     font-size: 1rem;
 }
 
-tbody tr:nth-child(2) {
+#leaderboard tbody tr:nth-child(2) {
     background: var(--rank-silver-bg);
     font-size: 0.94rem;
     box-shadow: inset 3px 0 0 var(--rank-silver);
 }
-tbody tr:nth-child(2) td {
+#leaderboard tbody tr:nth-child(2) td {
     padding-top: 0.65rem;
     padding-bottom: 0.65rem;
 }
-tbody tr:nth-child(2) .col-rank {
+#leaderboard tbody tr:nth-child(2) .col-rank {
     font-size: 0.9rem;
 }
-tbody tr:nth-child(2) .col-score {
+#leaderboard tbody tr:nth-child(2) .col-score {
     font-size: 0.96rem;
 }
 
-tbody tr:nth-child(3) {
+#leaderboard tbody tr:nth-child(3) {
     background: var(--rank-bronze-bg);
     font-size: 0.9rem;
     box-shadow: inset 3px 0 0 var(--rank-bronze);
 }
-tbody tr:nth-child(3) td {
+#leaderboard tbody tr:nth-child(3) td {
     padding-top: 0.6rem;
     padding-bottom: 0.6rem;
 }
-tbody tr:nth-child(3) .col-rank {
+#leaderboard tbody tr:nth-child(3) .col-rank {
     font-size: 0.88rem;
 }
-tbody tr:nth-child(3) .col-score {
+#leaderboard tbody tr:nth-child(3) .col-score {
     font-size: 0.92rem;
 }
 
-tbody tr:nth-child(1):hover,
-tbody tr:nth-child(2):hover,
-tbody tr:nth-child(3):hover {
+#leaderboard tbody tr:nth-child(1):hover,
+#leaderboard tbody tr:nth-child(2):hover,
+#leaderboard tbody tr:nth-child(3):hover {
     background: var(--row-hover);
 }
 
@@ -523,15 +539,15 @@ tbody .col-rank {
     color: var(--text-secondary);
 }
 
-tbody tr:nth-child(1) .col-rank {
+#leaderboard tbody tr:nth-child(1) .col-rank {
     color: var(--rank-gold);
     font-weight: 700;
 }
-tbody tr:nth-child(2) .col-rank {
+#leaderboard tbody tr:nth-child(2) .col-rank {
     color: var(--rank-silver);
     font-weight: 700;
 }
-tbody tr:nth-child(3) .col-rank {
+#leaderboard tbody tr:nth-child(3) .col-rank {
     color: var(--rank-bronze);
     font-weight: 700;
 }
@@ -838,4 +854,36 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
     .brand-text h1 {
         font-size: 0.65rem;
     }
+}
+
+/* ---------- Period row + standalone nav button ---------- */
+.period-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.toggle-btn.nav-btn {
+    margin-left: 0;
+    border-radius: 3px;
+}
+
+/* ---------- Hall of Fame table ---------- */
+.hof-table .col-trophies {
+    width: 100%;
+    text-align: left;
+}
+
+.hof-table tbody .col-trophies {
+    padding-left: 0.6rem;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-size: 1.1rem;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    white-space: normal;
+}
+
+.hof-table .col-player {
+    width: auto;
 }

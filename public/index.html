@@ -51,10 +51,12 @@
             </div>
 
             <div class="control-group">
-                <div class="toggle-group" id="period-toggle">
-                    <button class="toggle-btn active" data-value="all">All Time</button>
-                    <button class="toggle-btn" data-value="month">This Month</button>
-                    <button class="toggle-btn archive-btn" data-value="archive" id="archive-btn"><span class="archive-label">Archive</span><svg class="archive-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+                <div class="period-row" id="period-row">
+                    <button class="toggle-btn nav-btn" data-value="hof" id="hof-btn">Hall of Fame</button>
+                    <div class="toggle-group" id="period-toggle">
+                        <button class="toggle-btn active" data-value="all">All Time</button>
+                        <button class="toggle-btn archive-btn" data-value="archive" id="archive-btn"><span class="archive-label">Month</span><svg class="archive-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    </div>
                 </div>
                 <div class="archive-dropdown" id="archive-dropdown"></div>
             </div>
@@ -66,7 +68,7 @@
         </div>
         <div id="error" class="error" style="display: none;"></div>
 
-        <div class="table-wrap">
+        <div class="table-wrap" id="leaderboard-wrap">
             <table id="leaderboard">
                 <thead>
                     <tr>
@@ -86,6 +88,23 @@
         <div id="empty-state" class="empty-state" style="display: none;">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
             <p>No scores found for the selected filters.</p>
+        </div>
+
+        <div class="table-wrap" id="hof-wrap" style="display: none;">
+            <table class="hof-table" id="hof-table">
+                <thead>
+                    <tr>
+                        <th class="col-rank">#</th>
+                        <th class="col-player">Player</th>
+                        <th class="col-trophies">Trophies</th>
+                    </tr>
+                </thead>
+                <tbody id="hof-body"></tbody>
+            </table>
+        </div>
+
+        <div id="hof-empty" class="empty-state" style="display: none;">
+            <p>No trophies awarded yet.</p>
         </div>
     </main>
 

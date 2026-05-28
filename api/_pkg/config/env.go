@@ -34,6 +34,9 @@ var Env struct {
 
 	// WORLDRECORDS_CACHE_TTL - how long Vercel edge may cache world records responses, e.g. "5m"
 	WorldRecordsCacheTTL time.Duration
+
+	// HALLOFFAME_CACHE_TTL - how long Vercel edge may cache hall of fame responses, e.g. "6h"
+	HallOfFameCacheTTL time.Duration
 }
 
 func init() {
@@ -46,6 +49,7 @@ func init() {
 	Env.ActivityCacheTTL = durationEnv("ACTIVITY_CACHE_TTL", 4*time.Hour)
 	Env.LeaderboardCacheTTL = durationEnv("LEADERBOARD_CACHE_TTL", 10*time.Minute)
 	Env.WorldRecordsCacheTTL = durationEnv("WORLDRECORDS_CACHE_TTL", 60*time.Minute)
+	Env.HallOfFameCacheTTL = durationEnv("HALLOFFAME_CACHE_TTL", 6*time.Hour)
 }
 
 func stringEnv(key, fallback string) string {
