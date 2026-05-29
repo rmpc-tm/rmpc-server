@@ -20,13 +20,14 @@
         tableWrap: document.getElementById("leaderboard-wrap"),
         empty: document.getElementById("empty-state"),
         periodToggle: document.getElementById("period-toggle"),
-        periodRow: document.getElementById("period-row"),
         modeToggle: document.getElementById("game-mode-toggle"),
         archiveBtn: document.getElementById("archive-btn"),
         archiveDropdown: document.getElementById("archive-dropdown"),
+        hofBtn: document.getElementById("hof-btn"),
         hofWrap: document.getElementById("hof-wrap"),
         hofBody: document.getElementById("hof-body"),
-        hofEmpty: document.getElementById("hof-empty")
+        hofEmpty: document.getElementById("hof-empty"),
+        hofDescription: document.getElementById("hof-description")
     };
 
     // --- Activity chart ---
@@ -196,6 +197,7 @@
     }
 
     function fetchData() {
+        els.hofDescription.style.display = state.month === "hof" ? "" : "none";
         if (state.month === "hof") {
             fetchHallOfFame();
         } else {
@@ -359,10 +361,11 @@
     }
 
     function setActiveToggle(value) {
-        var buttons = els.periodRow.querySelectorAll(".toggle-btn");
+        var buttons = els.periodToggle.querySelectorAll(".toggle-btn");
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle("active", buttons[i].getAttribute("data-value") === value);
         }
+        els.hofBtn.classList.toggle("active", value === "hof");
     }
 
     function resetArchiveLabel() {
@@ -432,7 +435,7 @@
         }
     });
 
-    els.periodRow.addEventListener("click", function (e) {
+    function onPeriodClick(e) {
         var btn = e.target.closest(".toggle-btn");
         if (!btn) return;
 
@@ -458,7 +461,10 @@
         pushHash();
         syncUI();
         fetchData();
-    });
+    }
+
+    els.periodToggle.addEventListener("click", onPeriodClick);
+    els.hofBtn.addEventListener("click", onPeriodClick);
 
     els.archiveDropdown.addEventListener("click", function (e) {
         var btn = e.target.closest("button");

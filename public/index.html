@@ -44,6 +44,7 @@
 
         <div class="controls">
             <div class="control-group">
+                <label>Mode</label>
                 <div class="toggle-group" id="game-mode-toggle">
                     <button class="toggle-btn active" data-value="author">Author</button>
                     <button class="toggle-btn" data-value="gold">Gold</button>
@@ -51,16 +52,23 @@
             </div>
 
             <div class="control-group">
-                <div class="period-row" id="period-row">
-                    <button class="toggle-btn nav-btn" data-value="hof" id="hof-btn">Hall of Fame</button>
-                    <div class="toggle-group" id="period-toggle">
-                        <button class="toggle-btn active" data-value="all">All Time</button>
-                        <button class="toggle-btn archive-btn" data-value="archive" id="archive-btn"><span class="archive-label">Month</span><svg class="archive-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-                    </div>
+                <label>Awards</label>
+                <button class="toggle-btn nav-btn" data-value="hof" id="hof-btn">Hall of Fame</button>
+            </div>
+
+            <div class="control-group">
+                <label>Leaderboards</label>
+                <div class="toggle-group" id="period-toggle">
+                    <button class="toggle-btn active" data-value="all">All Time</button>
+                    <button class="toggle-btn archive-btn" data-value="archive" id="archive-btn"><span class="archive-label">Month</span><svg class="archive-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
                 </div>
                 <div class="archive-dropdown" id="archive-dropdown"></div>
             </div>
         </div>
+
+        <p id="hof-description" class="hof-description" style="display: none;">
+            Top three players each completed month earn gold, silver, and bronze trophies.
+        </p>
 
         <div id="loading" class="loading" style="display: none;">
             <div class="loading-spinner"></div>

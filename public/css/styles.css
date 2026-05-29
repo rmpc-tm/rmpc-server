@@ -284,6 +284,8 @@ main {
     letter-spacing: 0.12em;
     color: var(--text-secondary);
     font-weight: 500;
+    margin-bottom: 0.25rem;
+    line-height: 1;
 }
 
 .toggle-group {
@@ -856,17 +858,19 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
     }
 }
 
-/* ---------- Period row + standalone nav button ---------- */
-.period-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
+/* ---------- Standalone nav button ---------- */
 .toggle-btn.nav-btn {
     margin-left: 0;
     border-radius: 3px;
+}
+
+/* ---------- Hall of Fame description ---------- */
+.hof-description {
+    margin: 0.5rem 0 1rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
 }
 
 /* ---------- Hall of Fame table ---------- */
