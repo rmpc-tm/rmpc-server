@@ -21,7 +21,8 @@ type HallOfFameRow struct {
 // GetHallOfFame returns players ranked by trophy count for a single game mode
 // within [earliest, before). For each month it awards gold/silver/bronze to
 // the top 3 best-per-player scores, then aggregates per player. Rows arrive
-// pre-sorted by (gold, silver, bronze, name).
+// pre-sorted by (gold, silver, bronze, best_score, name) — best_score is the
+// player's career best within the period, used to break trophy-count ties.
 //
 // Banned players are excluded. gameMode must be "author" or "gold".
 func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]HallOfFameRow, error) {
@@ -43,6 +44,7 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 	monthly := SELECT(
 		table.Players.OpenplanetID,
 		table.Players.DisplayName,
+		MAX(table.Scores.Score).AS("best_score"),
 		rn.AS("rn"),
 	).FROM(
 		table.Scores.
@@ -61,6 +63,7 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 
 	mOpenplanetID := table.Players.OpenplanetID.From(monthly)
 	mDisplayName := table.Players.DisplayName.From(monthly)
+	mBestScore := IntegerColumn("best_score").From(monthly)
 	mRN := IntegerColumn("rn").From(monthly)
 
 	// Tally trophies. COUNT ignores NULLs, so the CASE returns 1 for matches
@@ -69,6 +72,7 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 	gold := COUNT(CASE().WHEN(mRN.EQ(Int(1))).THEN(Int(1)))
 	silver := COUNT(CASE().WHEN(mRN.EQ(Int(2))).THEN(Int(1)))
 	bronze := COUNT(CASE().WHEN(mRN.EQ(Int(3))).THEN(Int(1)))
+	playerBest := MAX(mBestScore)
 
 	stmt := SELECT(
 		mOpenplanetID,
@@ -85,6 +89,7 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 		gold.DESC(),
 		silver.DESC(),
 		bronze.DESC(),
+		playerBest.DESC(),
 		LOWER(mDisplayName).ASC(),
 	)
 

@@ -67,16 +67,12 @@ func HallOfFame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Rows arrive pre-sorted by (gold, silver, bronze, name). Assign joint
-	// Olympic rank: same (G, S, B) tuple → same rank; otherwise rank = i + 1.
+	// Rows arrive pre-sorted; ranking is fully determined by the query
+	// (trophy counts, then best score, then name).
 	entries := make([]hofEntryJSON, len(rows))
-	rank := 0
 	for i, r := range rows {
-		if i == 0 || r.Gold != rows[i-1].Gold || r.Silver != rows[i-1].Silver || r.Bronze != rows[i-1].Bronze {
-			rank = i + 1
-		}
 		entries[i] = hofEntryJSON{
-			Rank:   rank,
+			Rank:   i + 1,
 			Player: hofPlayerJSON{OpenplanetID: r.OpenplanetID, DisplayName: r.DisplayName},
 			Gold:   r.Gold,
 			Silver: r.Silver,
