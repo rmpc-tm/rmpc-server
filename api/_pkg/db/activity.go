@@ -23,10 +23,12 @@ func GetMedalActivity(db *sql.DB, days int) (map[string]int64, error) {
 		bucket.AS("medals.bucket"),
 		SUM(table.Scores.MapsCompleted).AS("medals.total"),
 	).FROM(
-		table.Scores,
-	).WHERE(
+		table.Scores.
+			LEFT_JOIN(table.BannedPlayers, table.BannedPlayers.PlayerID.EQ(table.Scores.PlayerID)),
+	).WHERE(AND(
+		table.BannedPlayers.ID.IS_NULL(),
 		table.Scores.CreatedAt.GT_EQ(NOW().SUB(INTERVAL(float64(days), DAY))),
-	).GROUP_BY(
+	)).GROUP_BY(
 		bucket,
 	).ORDER_BY(
 		bucket.ASC(),
