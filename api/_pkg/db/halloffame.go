@@ -50,12 +50,12 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 		table.Scores.
 			INNER_JOIN(table.Players, table.Players.ID.EQ(table.Scores.PlayerID)).
 			LEFT_JOIN(table.BannedPlayers, table.BannedPlayers.PlayerID.EQ(table.Scores.PlayerID)),
-	).WHERE(
-		table.BannedPlayers.ID.IS_NULL().
-			AND(table.Scores.GameMode.EQ(modeExpr)).
-			AND(table.Scores.CreatedAt.GT_EQ(TimestampzT(earliest))).
-			AND(table.Scores.CreatedAt.LT(TimestampzT(before))),
-	).GROUP_BY(
+	).WHERE(AND(
+		table.BannedPlayers.ID.IS_NULL(),
+		table.Scores.GameMode.EQ(modeExpr),
+		table.Scores.CreatedAt.GT_EQ(TimestampzT(earliest)),
+		table.Scores.CreatedAt.LT(TimestampzT(before)),
+	)).GROUP_BY(
 		table.Players.OpenplanetID,
 		table.Players.DisplayName,
 		month,
