@@ -36,8 +36,11 @@ func Activity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fill in all days in the range
-	start := time.Now().UTC().Add(-time.Duration(days) * 24 * time.Hour)
+	// Fill in all days in the range, ending on today (UTC). Anchor on midnight
+	// so the buckets don't slide as the wall clock advances within a day.
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	start := today.AddDate(0, 0, -(days - 1))
 
 	medals := make([]int64, days)
 	for i := 0; i < days; i++ {
