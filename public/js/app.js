@@ -1,18 +1,26 @@
 (function () {
     "use strict";
 
+    // view: "main" = leaderboard/HoF, "player" = single-player detail
     // month: "" = all time, "current" = this month, "YYYY-MM" = archive, "hof" = hall of fame
     var state = {
+        view: "main",
         gameMode: "author",
-        month: ""
+        month: "",
+        playerID: "",
+        playerSig: ""
     };
 
     var cache = {};
     var fetchGen = 0;
     var hofCache = {};
     var hofFetchGen = 0;
+    var playerCache = {};
+    var playerFetchGen = 0;
 
     var els = {
+        playerModal: document.getElementById("player-modal"),
+        playerClose: document.getElementById("player-close"),
         body: document.getElementById("leaderboard-body"),
         loading: document.getElementById("loading"),
         error: document.getElementById("error"),
@@ -27,7 +35,18 @@
         hofWrap: document.getElementById("hof-wrap"),
         hofBody: document.getElementById("hof-body"),
         hofEmpty: document.getElementById("hof-empty"),
-        hofDescription: document.getElementById("hof-description")
+        hofDescription: document.getElementById("hof-description"),
+        playerLoading: document.getElementById("player-loading"),
+        playerError: document.getElementById("player-error"),
+        playerContent: document.getElementById("player-content"),
+        playerName: document.getElementById("player-name"),
+        playerSummary: document.getElementById("player-summary"),
+        playerStatsAuthor: document.getElementById("player-stats-author"),
+        playerStatsGold: document.getElementById("player-stats-gold"),
+        playerBodyAuthor: document.getElementById("player-body-author"),
+        playerBodyGold: document.getElementById("player-body-gold"),
+        playerEmptyAuthor: document.getElementById("player-empty-author"),
+        playerEmptyGold: document.getElementById("player-empty-gold")
     };
 
     // --- Activity chart ---
@@ -116,6 +135,16 @@
         els.error.style.display = "none";
     }
 
+    function openPlayerModal() {
+        els.playerModal.style.display = "";
+        document.body.classList.add("modal-open");
+    }
+
+    function closePlayerModal() {
+        els.playerModal.style.display = "none";
+        document.body.classList.remove("modal-open");
+    }
+
     function showLoading() {
         els.loading.querySelector("span").textContent =
             state.month === "hof" ? "Loading hall of fame..." : "Loading scores...";
@@ -197,6 +226,12 @@
     }
 
     function fetchData() {
+        if (state.view === "player") {
+            openPlayerModal();
+            fetchPlayer();
+            return;
+        }
+        closePlayerModal();
         els.hofDescription.style.display = state.month === "hof" ? "" : "none";
         if (state.month === "hof") {
             fetchHallOfFame();
@@ -272,7 +307,7 @@
 
             tr.innerHTML =
                 '<td class="col-rank">' + escapeHtml(String(s.rank)) + "</td>" +
-                '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(s.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(s.player.display_name) + "</a></td>" +
+                '<td class="col-player">' + playerLink(s.player) + "</td>" +
                 '<td class="col-maps">' + (hasStats ? escapeHtml(String(s.maps_completed)) : "") + "</td>" +
                 '<td class="col-skipped">' + (hasStats ? escapeHtml(String(s.maps_skipped)) : "") + "</td>" +
                 '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
@@ -286,6 +321,15 @@
     function escapeHtml(str) {
         escapeEl.textContent = str;
         return escapeEl.innerHTML;
+    }
+
+    function playerLink(p) {
+        // p.t is the HMAC token. Without it the player page is unreachable,
+        // so fall back to a plain span.
+        var label = escapeHtml(p.display_name);
+        if (!p || !p.t) return label;
+        var href = "#player/" + encodeURIComponent(p.openplanet_id) + "/" + encodeURIComponent(p.t);
+        return '<a href="' + href + '">' + label + "</a>";
     }
 
     // --- Hall of Fame ---
@@ -348,7 +392,7 @@
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + escapeHtml(String(e.rank)) + "</td>" +
-                '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(e.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(e.player.display_name) + "</a></td>" +
+                '<td class="col-player">' + playerLink(e.player) + "</td>" +
                 '<td class="col-trophies">' + trophies + "</td>";
             els.hofBody.appendChild(tr);
         }
@@ -358,6 +402,137 @@
         var out = "";
         for (var i = 0; i < n; i++) out += s;
         return out;
+    }
+
+    // --- Player detail ---
+    function showPlayerLoading() {
+        els.playerLoading.style.display = "flex";
+        els.playerError.style.display = "none";
+        els.playerContent.style.display = "none";
+    }
+
+    function showPlayerError(msg) {
+        els.playerLoading.style.display = "none";
+        els.playerError.style.display = "block";
+        els.playerError.textContent = msg;
+        els.playerContent.style.display = "none";
+    }
+
+    function fetchPlayer() {
+        var key = state.playerID + ":" + state.playerSig;
+        if (playerCache[key]) {
+            renderPlayer(playerCache[key]);
+            return;
+        }
+
+        showPlayerLoading();
+
+        var gen = ++playerFetchGen;
+        var params = new URLSearchParams();
+        params.set("id", state.playerID);
+        params.set("t", state.playerSig);
+
+        fetch("api/player?" + params.toString())
+            .then(function (res) {
+                if (res.status === 404) throw new Error("notfound");
+                if (!res.ok) throw new Error("request");
+                return res.json();
+            })
+            .then(function (data) {
+                if (gen !== playerFetchGen) return;
+                playerCache[key] = data;
+                renderPlayer(data);
+            })
+            .catch(function (err) {
+                if (gen !== playerFetchGen) return;
+                if (err.message === "notfound") {
+                    showPlayerError("Player not found or link expired.");
+                } else if (err.message === "request") {
+                    showPlayerError("Failed to load player. Please try again later.");
+                } else {
+                    showPlayerError("Something went wrong while reading the response.");
+                }
+            });
+    }
+
+    function renderPlayer(data) {
+        els.playerLoading.style.display = "none";
+        els.playerError.style.display = "none";
+        els.playerContent.style.display = "";
+
+        var tmioHref = "https://trackmania.io/#/player/" + encodeURIComponent(data.player.openplanet_id);
+        els.playerName.innerHTML = '<a href="' + tmioHref + '" target="_blank" rel="noopener">' + escapeHtml(data.player.display_name) + "</a>";
+
+        var byMode = {};
+        for (var i = 0; i < data.modes.length; i++) {
+            byMode[data.modes[i].game_mode] = data.modes[i];
+        }
+        var authorStats = computeModeStats(byMode.author);
+        var goldStats = computeModeStats(byMode.gold);
+
+        var totalRuns = authorStats.runs + goldStats.runs;
+        var totalMedals = authorStats.medals + goldStats.medals;
+        var totalSkips = authorStats.skips + goldStats.skips;
+
+        els.playerSummary.innerHTML =
+            summaryItem("Runs", String(totalRuns)) +
+            summaryItem("Medals", String(totalMedals)) +
+            summaryItem("Skipped", String(totalSkips));
+
+        renderPlayerMode(byMode.author, authorStats, els.playerBodyAuthor, els.playerEmptyAuthor, els.playerStatsAuthor);
+        renderPlayerMode(byMode.gold, goldStats, els.playerBodyGold, els.playerEmptyGold, els.playerStatsGold);
+    }
+
+    function computeModeStats(mode) {
+        var stats = { runs: 0, best: 0, medals: 0, skips: 0 };
+        if (!mode || !mode.scores) return stats;
+        var scores = mode.scores;
+        stats.runs = scores.length;
+        for (var i = 0; i < scores.length; i++) {
+            var s = scores[i];
+            if (s.score > stats.best) stats.best = s.score;
+            stats.medals += s.maps_completed;
+            stats.skips += s.maps_skipped;
+        }
+        return stats;
+    }
+
+    function summaryItem(label, value) {
+        return '<li><span class="summary-label">' + escapeHtml(label) + '</span><span class="summary-value">' + escapeHtml(value) + '</span></li>';
+    }
+
+    function renderPlayerMode(mode, stats, tbody, empty, statsEl) {
+        tbody.innerHTML = "";
+        if (!mode || stats.runs === 0) {
+            statsEl.textContent = "no runs";
+            tbody.parentElement.style.display = "none";
+            empty.style.display = "block";
+            return;
+        }
+        tbody.parentElement.style.display = "";
+        empty.style.display = "none";
+        statsEl.textContent = stats.runs + " run" + (stats.runs === 1 ? "" : "s");
+
+        // Tag the top 3 runs (by score, ties broken by date order) so CSS can
+        // show the same medal accents as the leaderboard podium.
+        var podiumClass = new Array(mode.scores.length);
+        var ranked = mode.scores.map(function (s, i) { return { i: i, score: s.score }; });
+        ranked.sort(function (a, b) { return b.score - a.score; });
+        for (var r = 0; r < Math.min(3, ranked.length); r++) {
+            podiumClass[ranked[r].i] = "podium-" + (r + 1);
+        }
+
+        for (var i = 0; i < mode.scores.length; i++) {
+            var s = mode.scores[i];
+            var tr = document.createElement("tr");
+            if (podiumClass[i]) tr.className = podiumClass[i];
+            tr.innerHTML =
+                '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + escapeHtml(formatDate(s.created_at)) + "</td>" +
+                '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
+                '<td class="col-maps">' + escapeHtml(String(s.maps_completed)) + "</td>" +
+                '<td class="col-skipped">' + escapeHtml(String(s.maps_skipped)) + "</td>";
+            tbody.appendChild(tr);
+        }
     }
 
     function setActiveToggle(value) {
@@ -374,9 +549,14 @@
 
     // --- Hash routing ---
     function pushHash() {
-        var h = state.gameMode;
-        if (state.month) {
-            h += "/" + state.month;
+        var h;
+        if (state.view === "player") {
+            h = "player/" + encodeURIComponent(state.playerID) + "/" + encodeURIComponent(state.playerSig);
+        } else {
+            h = state.gameMode;
+            if (state.month) {
+                h += "/" + state.month;
+            }
         }
         history.replaceState(null, "", "#" + h);
     }
@@ -407,18 +587,25 @@
         var hash = location.hash.replace(/^#/, "");
         closeArchiveDropdown();
 
-        if (!hash) {
-            state.gameMode = "author";
-            state.month = "";
+        var segments = hash ? hash.split("/") : [];
+        if (segments[0] === "player" && segments.length >= 3) {
+            state.view = "player";
+            state.playerID = decodeURIComponent(segments[1]);
+            state.playerSig = decodeURIComponent(segments[2]);
         } else {
-            var segments = hash.split("/");
-            var mode = segments[0];
-            if (mode === "author" || mode === "gold") {
-                state.gameMode = mode;
-            } else {
+            state.view = "main";
+            if (!hash) {
                 state.gameMode = "author";
+                state.month = "";
+            } else {
+                var mode = segments[0];
+                if (mode === "author" || mode === "gold") {
+                    state.gameMode = mode;
+                } else {
+                    state.gameMode = "author";
+                }
+                state.month = segments[1] || "";
             }
-            state.month = segments[1] || "";
         }
         syncUI();
         fetchData();
@@ -482,6 +669,24 @@
         if (!els.archiveDropdown.contains(e.target) && !els.archiveBtn.contains(e.target)) {
             closeArchiveDropdown();
         }
+    });
+
+    function dismissPlayer() {
+        if (state.view !== "player") return;
+        // Navigate forward to the main view rather than walking history back —
+        // history.back() can land on another player URL (e.g. after editing
+        // the hash directly) and reopen the modal.
+        var h = state.gameMode || "author";
+        if (state.month) h += "/" + state.month;
+        location.hash = "#" + h;
+    }
+
+    els.playerClose.addEventListener("click", dismissPlayer);
+    els.playerModal.addEventListener("click", function (e) {
+        if (e.target.hasAttribute("data-modal-close")) dismissPlayer();
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") dismissPlayer();
     });
 
     window.addEventListener("hashchange", applyHash);

@@ -38,7 +38,9 @@ type LeaderboardParams struct {
 }
 
 func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, error) {
-	condition := table.BannedPlayers.ID.IS_NULL()
+	condition := table.BannedPlayers.ID.IS_NULL().AND(
+		table.Scores.Score.GT(Int(0)),
+	)
 
 	if params.GameMode != "" {
 		expr, ok := gameModeExpression[params.GameMode]

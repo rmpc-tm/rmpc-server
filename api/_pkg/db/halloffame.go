@@ -53,6 +53,7 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 	).WHERE(AND(
 		table.BannedPlayers.ID.IS_NULL(),
 		table.Scores.GameMode.EQ(modeExpr),
+		table.Scores.Score.GT(Int(0)),
 		table.Scores.CreatedAt.GT_EQ(TimestampzT(earliest)),
 		table.Scores.CreatedAt.LT(TimestampzT(before)),
 	)).GROUP_BY(

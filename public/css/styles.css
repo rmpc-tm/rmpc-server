@@ -891,3 +891,217 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 .hof-table .col-player {
     width: auto;
 }
+
+/* ---------- Player modal ---------- */
+.player-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4vh 1rem;
+    overflow-y: auto;
+}
+
+.player-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    cursor: pointer;
+}
+
+.player-modal-dialog {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    max-width: 760px;
+    width: 100%;
+    padding: 1.5rem 1.5rem 1.25rem;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+    animation: modalEnter 0.16s ease-out;
+}
+
+@keyframes modalEnter {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.player-modal-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.player-modal-close:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    background: var(--surface-hover);
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+/* ---------- Player detail ---------- */
+.player-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0 2rem 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+}
+
+.player-header h2 {
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--heading);
+    line-height: 1.1;
+    margin: 0;
+}
+
+.player-header h2 a {
+    color: var(--link);
+    text-decoration: none;
+    transition: color 0.1s ease;
+}
+
+.player-header h2 a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
+
+.player-summary {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin: 0 0 1.25rem;
+    padding: 0;
+}
+
+.player-summary li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.player-summary .summary-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+}
+
+.player-summary .summary-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--heading);
+    line-height: 1.1;
+}
+
+.player-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 720px) {
+    .player-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.player-mode-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.player-mode-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--heading);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.player-mode-stats {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+}
+
+.player-table .col-date {
+    text-align: left;
+    width: auto;
+}
+
+.player-table .col-maps,
+.player-table .col-skipped {
+    width: 2.25rem;
+}
+
+.player-mode-empty {
+    padding: 1rem 0.6rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Podium tinting for the player's top-3 runs — left stripe + colored score,
+   matching the leaderboard's gold/silver/bronze palette. No size bump. */
+.player-table tbody tr.podium-1 {
+    background: var(--rank-gold-bg);
+    box-shadow: inset 3px 0 0 var(--rank-gold);
+}
+.player-table tbody tr.podium-1 .col-score {
+    color: var(--rank-gold);
+}
+.player-table tbody tr.podium-2 {
+    background: var(--rank-silver-bg);
+    box-shadow: inset 3px 0 0 var(--rank-silver);
+}
+.player-table tbody tr.podium-2 .col-score {
+    color: var(--rank-silver);
+}
+.player-table tbody tr.podium-3 {
+    background: var(--rank-bronze-bg);
+    box-shadow: inset 3px 0 0 var(--rank-bronze);
+}
+.player-table tbody tr.podium-3 .col-score {
+    color: var(--rank-bronze);
+}
+.player-table tbody tr.podium-1:hover,
+.player-table tbody tr.podium-2:hover,
+.player-table tbody tr.podium-3:hover {
+    background: var(--row-hover);
+}

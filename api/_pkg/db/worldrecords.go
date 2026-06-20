@@ -26,6 +26,8 @@ type WorldRecordParams struct {
 func GetWorldRecords(db *sql.DB, params WorldRecordParams) ([]WorldRecord, error) {
 	condition := table.BannedPlayers.ID.IS_NULL().AND(
 		table.Scores.GameMode.IN(enum.GameMode.Author, enum.GameMode.Gold),
+	).AND(
+		table.Scores.Score.GT(Int(0)),
 	)
 	if params.StartTime != nil {
 		condition = condition.AND(table.Scores.CreatedAt.GT_EQ(TimestampzT(*params.StartTime)))

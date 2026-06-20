@@ -37,6 +37,12 @@ var Env struct {
 
 	// HALLOFFAME_CACHE_TTL - how long Vercel edge may cache hall of fame responses, e.g. "6h"
 	HallOfFameCacheTTL time.Duration
+
+	// PLAYER_LINK_SECRET - secret used to sign per-player page URLs (required)
+	PlayerLinkSecret string
+
+	// PLAYER_CACHE_TTL - how long Vercel edge may cache player detail responses, e.g. "6h"
+	PlayerCacheTTL time.Duration
 }
 
 func init() {
@@ -47,9 +53,11 @@ func init() {
 	Env.ScoreCooldown = durationEnv("SCORE_COOLDOWN", 10*time.Minute)
 	Env.AuthRateLimit = 10
 	Env.ActivityCacheTTL = durationEnv("ACTIVITY_CACHE_TTL", 4*time.Hour)
-	Env.LeaderboardCacheTTL = durationEnv("LEADERBOARD_CACHE_TTL", 10*time.Minute)
+	Env.LeaderboardCacheTTL = durationEnv("LEADERBOARD_CACHE_TTL", 15*time.Minute)
 	Env.WorldRecordsCacheTTL = durationEnv("WORLDRECORDS_CACHE_TTL", 60*time.Minute)
 	Env.HallOfFameCacheTTL = durationEnv("HALLOFFAME_CACHE_TTL", 6*time.Hour)
+	Env.PlayerLinkSecret = os.Getenv("PLAYER_LINK_SECRET")
+	Env.PlayerCacheTTL = durationEnv("PLAYER_CACHE_TTL", 15*time.Minute)
 }
 
 func stringEnv(key, fallback string) string {
