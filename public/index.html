@@ -42,6 +42,7 @@
             <p>For more details read the FAQ on <a href="https://openplanet.dev/plugin/randommappace" target="_blank" rel="noopener">Openplanet plugin page</a>.</p>
         </details>
 
+        <section id="view-main">
         <div class="controls">
             <div class="control-group">
                 <label>Mode</label>
@@ -114,6 +115,68 @@
         <div id="hof-empty" class="empty-state" style="display: none;">
             <p>No trophies awarded yet.</p>
         </div>
+        </section>
+
+        <section id="view-player" style="display: none;">
+            <div id="player-loading" class="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <span>Loading player...</span>
+            </div>
+            <div id="player-error" class="error" style="display: none;"></div>
+            <div id="player-content" style="display: none;">
+                <header class="player-header">
+                    <button class="player-back" id="player-back" type="button">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                        Back
+                    </button>
+                    <h2 id="player-name"></h2>
+                    <a id="player-tmio" class="player-tmio" target="_blank" rel="noopener">trackmania.io ↗</a>
+                </header>
+                <ul class="player-summary" id="player-summary"></ul>
+                <div class="player-grid">
+                    <div class="player-mode" id="player-mode-author">
+                        <div class="player-mode-header">
+                            <span class="player-mode-name">Author</span>
+                            <span class="player-mode-stats" id="player-stats-author"></span>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="player-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-date">Date</th>
+                                        <th class="col-score">Score</th>
+                                        <th class="col-maps" data-tooltip="Maps completed"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></th>
+                                        <th class="col-skipped" data-tooltip="Maps skipped"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="player-body-author"></tbody>
+                            </table>
+                            <p class="player-mode-empty" id="player-empty-author" style="display: none;">No runs yet.</p>
+                        </div>
+                    </div>
+                    <div class="player-mode" id="player-mode-gold">
+                        <div class="player-mode-header">
+                            <span class="player-mode-name">Gold</span>
+                            <span class="player-mode-stats" id="player-stats-gold"></span>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="player-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-date">Date</th>
+                                        <th class="col-score">Score</th>
+                                        <th class="col-maps" data-tooltip="Maps completed"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></th>
+                                        <th class="col-skipped" data-tooltip="Maps skipped"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="player-body-gold"></tbody>
+                            </table>
+                            <p class="player-mode-empty" id="player-empty-gold" style="display: none;">No runs yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer>

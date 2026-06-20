@@ -1,18 +1,26 @@
 (function () {
     "use strict";
 
+    // view: "main" = leaderboard/HoF, "player" = single-player detail
     // month: "" = all time, "current" = this month, "YYYY-MM" = archive, "hof" = hall of fame
     var state = {
+        view: "main",
         gameMode: "author",
-        month: ""
+        month: "",
+        playerID: "",
+        playerSig: ""
     };
 
     var cache = {};
     var fetchGen = 0;
     var hofCache = {};
     var hofFetchGen = 0;
+    var playerCache = {};
+    var playerFetchGen = 0;
 
     var els = {
+        viewMain: document.getElementById("view-main"),
+        viewPlayer: document.getElementById("view-player"),
         body: document.getElementById("leaderboard-body"),
         loading: document.getElementById("loading"),
         error: document.getElementById("error"),
@@ -27,7 +35,20 @@
         hofWrap: document.getElementById("hof-wrap"),
         hofBody: document.getElementById("hof-body"),
         hofEmpty: document.getElementById("hof-empty"),
-        hofDescription: document.getElementById("hof-description")
+        hofDescription: document.getElementById("hof-description"),
+        playerLoading: document.getElementById("player-loading"),
+        playerError: document.getElementById("player-error"),
+        playerContent: document.getElementById("player-content"),
+        playerName: document.getElementById("player-name"),
+        playerTmio: document.getElementById("player-tmio"),
+        playerBack: document.getElementById("player-back"),
+        playerSummary: document.getElementById("player-summary"),
+        playerStatsAuthor: document.getElementById("player-stats-author"),
+        playerStatsGold: document.getElementById("player-stats-gold"),
+        playerBodyAuthor: document.getElementById("player-body-author"),
+        playerBodyGold: document.getElementById("player-body-gold"),
+        playerEmptyAuthor: document.getElementById("player-empty-author"),
+        playerEmptyGold: document.getElementById("player-empty-gold")
     };
 
     // --- Activity chart ---
@@ -116,6 +137,16 @@
         els.error.style.display = "none";
     }
 
+    function showMainView() {
+        els.viewMain.style.display = "";
+        els.viewPlayer.style.display = "none";
+    }
+
+    function showPlayerView() {
+        els.viewMain.style.display = "none";
+        els.viewPlayer.style.display = "";
+    }
+
     function showLoading() {
         els.loading.querySelector("span").textContent =
             state.month === "hof" ? "Loading hall of fame..." : "Loading scores...";
@@ -197,6 +228,12 @@
     }
 
     function fetchData() {
+        if (state.view === "player") {
+            showPlayerView();
+            fetchPlayer();
+            return;
+        }
+        showMainView();
         els.hofDescription.style.display = state.month === "hof" ? "" : "none";
         if (state.month === "hof") {
             fetchHallOfFame();
@@ -272,7 +309,7 @@
 
             tr.innerHTML =
                 '<td class="col-rank">' + escapeHtml(String(s.rank)) + "</td>" +
-                '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(s.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(s.player.display_name) + "</a></td>" +
+                '<td class="col-player">' + playerLink(s.player) + "</td>" +
                 '<td class="col-maps">' + (hasStats ? escapeHtml(String(s.maps_completed)) : "") + "</td>" +
                 '<td class="col-skipped">' + (hasStats ? escapeHtml(String(s.maps_skipped)) : "") + "</td>" +
                 '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
@@ -286,6 +323,15 @@
     function escapeHtml(str) {
         escapeEl.textContent = str;
         return escapeEl.innerHTML;
+    }
+
+    function playerLink(p) {
+        // p.t is the HMAC token. Without it the player page is unreachable,
+        // so fall back to a plain span.
+        var label = escapeHtml(p.display_name);
+        if (!p || !p.t) return label;
+        var href = "#player/" + encodeURIComponent(p.openplanet_id) + "/" + encodeURIComponent(p.t);
+        return '<a href="' + href + '">' + label + "</a>";
     }
 
     // --- Hall of Fame ---
@@ -348,7 +394,7 @@
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + escapeHtml(String(e.rank)) + "</td>" +
-                '<td class="col-player"><a href="https://trackmania.io/#/player/' + encodeURIComponent(e.player.openplanet_id) + '" target="_blank" rel="noopener">' + escapeHtml(e.player.display_name) + "</a></td>" +
+                '<td class="col-player">' + playerLink(e.player) + "</td>" +
                 '<td class="col-trophies">' + trophies + "</td>";
             els.hofBody.appendChild(tr);
         }
@@ -358,6 +404,107 @@
         var out = "";
         for (var i = 0; i < n; i++) out += s;
         return out;
+    }
+
+    // --- Player detail ---
+    function showPlayerLoading() {
+        els.playerLoading.style.display = "flex";
+        els.playerError.style.display = "none";
+        els.playerContent.style.display = "none";
+    }
+
+    function showPlayerError(msg) {
+        els.playerLoading.style.display = "none";
+        els.playerError.style.display = "block";
+        els.playerError.textContent = msg;
+        els.playerContent.style.display = "none";
+    }
+
+    function fetchPlayer() {
+        var key = state.playerID + ":" + state.playerSig;
+        if (playerCache[key]) {
+            renderPlayer(playerCache[key]);
+            return;
+        }
+
+        showPlayerLoading();
+
+        var gen = ++playerFetchGen;
+        var params = new URLSearchParams();
+        params.set("id", state.playerID);
+        params.set("t", state.playerSig);
+
+        fetch("api/player?" + params.toString())
+            .then(function (res) {
+                if (res.status === 404) throw new Error("notfound");
+                if (!res.ok) throw new Error("request");
+                return res.json();
+            })
+            .then(function (data) {
+                if (gen !== playerFetchGen) return;
+                playerCache[key] = data;
+                renderPlayer(data);
+            })
+            .catch(function (err) {
+                if (gen !== playerFetchGen) return;
+                if (err.message === "notfound") {
+                    showPlayerError("Player not found or link expired.");
+                } else if (err.message === "request") {
+                    showPlayerError("Failed to load player. Please try again later.");
+                } else {
+                    showPlayerError("Something went wrong while reading the response.");
+                }
+            });
+    }
+
+    function renderPlayer(data) {
+        els.playerLoading.style.display = "none";
+        els.playerError.style.display = "none";
+        els.playerContent.style.display = "";
+
+        els.playerName.textContent = data.player.display_name;
+        els.playerTmio.href = "https://trackmania.io/#/player/" + encodeURIComponent(data.player.openplanet_id);
+
+        els.playerSummary.innerHTML =
+            summaryItem("Runs", String(data.summary.total_runs)) +
+            summaryItem("Medals", String(data.summary.medals_earned)) +
+            summaryItem("Skipped", String(data.summary.maps_skipped)) +
+            summaryItem("Since", data.summary.active_since || "—");
+
+        var byMode = {};
+        for (var i = 0; i < data.modes.length; i++) {
+            byMode[data.modes[i].game_mode] = data.modes[i];
+        }
+        renderPlayerMode(byMode.author, els.playerBodyAuthor, els.playerEmptyAuthor, els.playerStatsAuthor);
+        renderPlayerMode(byMode.gold, els.playerBodyGold, els.playerEmptyGold, els.playerStatsGold);
+    }
+
+    function summaryItem(label, value) {
+        return '<li><span class="summary-label">' + escapeHtml(label) + '</span><span class="summary-value">' + escapeHtml(value) + '</span></li>';
+    }
+
+    function renderPlayerMode(mode, tbody, empty, statsEl) {
+        tbody.innerHTML = "";
+        if (!mode || mode.run_count === 0) {
+            statsEl.textContent = "no runs";
+            tbody.parentElement.style.display = "none";
+            empty.style.display = "block";
+            return;
+        }
+        tbody.parentElement.style.display = "";
+        empty.style.display = "none";
+        statsEl.textContent = "best " + formatScore(mode.best_score) + " · " + mode.run_count + " run" + (mode.run_count === 1 ? "" : "s");
+
+        for (var i = 0; i < mode.scores.length; i++) {
+            var s = mode.scores[i];
+            var tr = document.createElement("tr");
+            tr.innerHTML =
+                '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + escapeHtml(formatDate(s.created_at)) + "</td>" +
+                '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
+                '<td class="col-maps">' + escapeHtml(String(s.maps_completed)) + "</td>" +
+                '<td class="col-skipped">' + escapeHtml(String(s.maps_skipped)) + "</td>";
+            tbody.appendChild(tr);
+        }
     }
 
     function setActiveToggle(value) {
@@ -374,9 +521,14 @@
 
     // --- Hash routing ---
     function pushHash() {
-        var h = state.gameMode;
-        if (state.month) {
-            h += "/" + state.month;
+        var h;
+        if (state.view === "player") {
+            h = "player/" + encodeURIComponent(state.playerID) + "/" + encodeURIComponent(state.playerSig);
+        } else {
+            h = state.gameMode;
+            if (state.month) {
+                h += "/" + state.month;
+            }
         }
         history.replaceState(null, "", "#" + h);
     }
@@ -407,18 +559,25 @@
         var hash = location.hash.replace(/^#/, "");
         closeArchiveDropdown();
 
-        if (!hash) {
-            state.gameMode = "author";
-            state.month = "";
+        var segments = hash ? hash.split("/") : [];
+        if (segments[0] === "player" && segments.length >= 3) {
+            state.view = "player";
+            state.playerID = decodeURIComponent(segments[1]);
+            state.playerSig = decodeURIComponent(segments[2]);
         } else {
-            var segments = hash.split("/");
-            var mode = segments[0];
-            if (mode === "author" || mode === "gold") {
-                state.gameMode = mode;
-            } else {
+            state.view = "main";
+            if (!hash) {
                 state.gameMode = "author";
+                state.month = "";
+            } else {
+                var mode = segments[0];
+                if (mode === "author" || mode === "gold") {
+                    state.gameMode = mode;
+                } else {
+                    state.gameMode = "author";
+                }
+                state.month = segments[1] || "";
             }
-            state.month = segments[1] || "";
         }
         syncUI();
         fetchData();
@@ -481,6 +640,14 @@
     document.addEventListener("click", function (e) {
         if (!els.archiveDropdown.contains(e.target) && !els.archiveBtn.contains(e.target)) {
             closeArchiveDropdown();
+        }
+    });
+
+    els.playerBack.addEventListener("click", function () {
+        if (history.length > 1) {
+            history.back();
+        } else {
+            location.hash = "";
         }
     });
 

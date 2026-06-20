@@ -7,6 +7,7 @@ import (
 
 	"rmpc-server/api/_pkg/config"
 	"rmpc-server/api/_pkg/db"
+	"rmpc-server/api/_pkg/playerlink"
 	"rmpc-server/api/_pkg/response"
 	"rmpc-server/api/_pkg/validate"
 )
@@ -18,6 +19,7 @@ type hofQuery struct {
 type hofPlayerJSON struct {
 	OpenplanetID string `json:"openplanet_id"`
 	DisplayName  string `json:"display_name"`
+	Token        string `json:"t"`
 }
 
 type hofEntryJSON struct {
@@ -73,7 +75,11 @@ func HallOfFame(w http.ResponseWriter, r *http.Request) {
 	for i, r := range rows {
 		entries[i] = hofEntryJSON{
 			Rank:   i + 1,
-			Player: hofPlayerJSON{OpenplanetID: r.OpenplanetID, DisplayName: r.DisplayName},
+			Player: hofPlayerJSON{
+				OpenplanetID: r.OpenplanetID,
+				DisplayName:  r.DisplayName,
+				Token:        playerlink.Sign(r.OpenplanetID),
+			},
 			Gold:   r.Gold,
 			Silver: r.Silver,
 			Bronze: r.Bronze,

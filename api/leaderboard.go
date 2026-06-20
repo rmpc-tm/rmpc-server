@@ -7,6 +7,7 @@ import (
 
 	"rmpc-server/api/_pkg/config"
 	"rmpc-server/api/_pkg/db"
+	"rmpc-server/api/_pkg/playerlink"
 	"rmpc-server/api/_pkg/response"
 	"rmpc-server/api/_pkg/validate"
 )
@@ -25,6 +26,7 @@ type leaderboardResponse struct {
 type leaderboardPlayerJSON struct {
 	OpenplanetID string `json:"openplanet_id"`
 	DisplayName  string `json:"display_name"`
+	Token        string `json:"t"`
 }
 
 type leaderboardEntryJSON struct {
@@ -121,6 +123,7 @@ func Leaderboard(w http.ResponseWriter, r *http.Request) {
 			Player: leaderboardPlayerJSON{
 				OpenplanetID: e.OpenplanetID,
 				DisplayName:  e.DisplayName,
+				Token:        playerlink.Sign(e.OpenplanetID),
 			},
 			Score:         e.Score,
 			MapsCompleted: e.MapsCompleted,
