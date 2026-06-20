@@ -40,7 +40,6 @@
         playerError: document.getElementById("player-error"),
         playerContent: document.getElementById("player-content"),
         playerName: document.getElementById("player-name"),
-        playerTmio: document.getElementById("player-tmio"),
         playerBack: document.getElementById("player-back"),
         playerSummary: document.getElementById("player-summary"),
         playerStatsAuthor: document.getElementById("player-stats-author"),
@@ -462,8 +461,8 @@
         els.playerError.style.display = "none";
         els.playerContent.style.display = "";
 
-        els.playerName.textContent = data.player.display_name;
-        els.playerTmio.href = "https://trackmania.io/#/player/" + encodeURIComponent(data.player.openplanet_id);
+        var tmioHref = "https://trackmania.io/#/player/" + encodeURIComponent(data.player.openplanet_id);
+        els.playerName.innerHTML = '<a href="' + tmioHref + '" target="_blank" rel="noopener">' + escapeHtml(data.player.display_name) + "</a>";
 
         var byMode = {};
         for (var i = 0; i < data.modes.length; i++) {
@@ -475,20 +474,18 @@
         var totalRuns = authorStats.runs + goldStats.runs;
         var totalMedals = authorStats.medals + goldStats.medals;
         var totalSkips = authorStats.skips + goldStats.skips;
-        var earliest = earlierOf(authorStats.earliest, goldStats.earliest);
 
         els.playerSummary.innerHTML =
             summaryItem("Runs", String(totalRuns)) +
             summaryItem("Medals", String(totalMedals)) +
-            summaryItem("Skipped", String(totalSkips)) +
-            summaryItem("Since", earliest ? formatDate(earliest) : "—");
+            summaryItem("Skipped", String(totalSkips));
 
         renderPlayerMode(byMode.author, authorStats, els.playerBodyAuthor, els.playerEmptyAuthor, els.playerStatsAuthor);
         renderPlayerMode(byMode.gold, goldStats, els.playerBodyGold, els.playerEmptyGold, els.playerStatsGold);
     }
 
     function computeModeStats(mode) {
-        var stats = { runs: 0, best: 0, medals: 0, skips: 0, earliest: null };
+        var stats = { runs: 0, best: 0, medals: 0, skips: 0 };
         if (!mode || !mode.scores) return stats;
         var scores = mode.scores;
         stats.runs = scores.length;
@@ -497,16 +494,8 @@
             if (s.score > stats.best) stats.best = s.score;
             stats.medals += s.maps_completed;
             stats.skips += s.maps_skipped;
-            var d = new Date(s.created_at).getTime();
-            if (!stats.earliest || d < stats.earliest) stats.earliest = d;
         }
         return stats;
-    }
-
-    function earlierOf(a, b) {
-        if (!a) return b;
-        if (!b) return a;
-        return a < b ? a : b;
     }
 
     function summaryItem(label, value) {
