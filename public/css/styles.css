@@ -468,58 +468,61 @@ tbody tr:nth-child(even):hover {
     background: var(--row-hover);
 }
 
-/* Podium rows — left accent stripe (leaderboard only; HoF ranks can be joint) */
-#leaderboard tbody tr:nth-child(1) {
+/* Podium rows — left accent stripe + tinted bg + colored score.
+   Shared by the leaderboard's top 3 (positional) and the player table's
+   top 3 by score (class-tagged). Leaderboard adds size bumps below. */
+#leaderboard tbody tr:nth-child(1),
+.player-table tbody tr.podium-1 {
     background: var(--rank-gold-bg);
-    font-size: 1rem;
     box-shadow: inset 3px 0 0 var(--rank-gold);
 }
-#leaderboard tbody tr:nth-child(1) td {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-}
-#leaderboard tbody tr:nth-child(1) .col-rank {
-    font-size: 0.95rem;
-}
-#leaderboard tbody tr:nth-child(1) .col-score {
-    font-size: 1rem;
+#leaderboard tbody tr:nth-child(1) .col-score,
+.player-table tbody tr.podium-1 .col-score {
+    color: var(--rank-gold);
 }
 
-#leaderboard tbody tr:nth-child(2) {
+#leaderboard tbody tr:nth-child(2),
+.player-table tbody tr.podium-2 {
     background: var(--rank-silver-bg);
-    font-size: 0.94rem;
     box-shadow: inset 3px 0 0 var(--rank-silver);
 }
-#leaderboard tbody tr:nth-child(2) td {
-    padding-top: 0.65rem;
-    padding-bottom: 0.65rem;
-}
-#leaderboard tbody tr:nth-child(2) .col-rank {
-    font-size: 0.9rem;
-}
-#leaderboard tbody tr:nth-child(2) .col-score {
-    font-size: 0.96rem;
+#leaderboard tbody tr:nth-child(2) .col-score,
+.player-table tbody tr.podium-2 .col-score {
+    color: var(--rank-silver);
 }
 
-#leaderboard tbody tr:nth-child(3) {
+#leaderboard tbody tr:nth-child(3),
+.player-table tbody tr.podium-3 {
     background: var(--rank-bronze-bg);
-    font-size: 0.9rem;
     box-shadow: inset 3px 0 0 var(--rank-bronze);
 }
-#leaderboard tbody tr:nth-child(3) td {
-    padding-top: 0.6rem;
-    padding-bottom: 0.6rem;
+#leaderboard tbody tr:nth-child(3) .col-score,
+.player-table tbody tr.podium-3 .col-score {
+    color: var(--rank-bronze);
 }
-#leaderboard tbody tr:nth-child(3) .col-rank {
-    font-size: 0.88rem;
-}
-#leaderboard tbody tr:nth-child(3) .col-score {
-    font-size: 0.92rem;
-}
+
+/* Leaderboard-only: size bumps for podium rows */
+#leaderboard tbody tr:nth-child(1) { font-size: 1rem; }
+#leaderboard tbody tr:nth-child(1) td { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+#leaderboard tbody tr:nth-child(1) .col-rank { font-size: 0.95rem; }
+#leaderboard tbody tr:nth-child(1) .col-score { font-size: 1rem; }
+
+#leaderboard tbody tr:nth-child(2) { font-size: 0.94rem; }
+#leaderboard tbody tr:nth-child(2) td { padding-top: 0.65rem; padding-bottom: 0.65rem; }
+#leaderboard tbody tr:nth-child(2) .col-rank { font-size: 0.9rem; }
+#leaderboard tbody tr:nth-child(2) .col-score { font-size: 0.96rem; }
+
+#leaderboard tbody tr:nth-child(3) { font-size: 0.9rem; }
+#leaderboard tbody tr:nth-child(3) td { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+#leaderboard tbody tr:nth-child(3) .col-rank { font-size: 0.88rem; }
+#leaderboard tbody tr:nth-child(3) .col-score { font-size: 0.92rem; }
 
 #leaderboard tbody tr:nth-child(1):hover,
 #leaderboard tbody tr:nth-child(2):hover,
-#leaderboard tbody tr:nth-child(3):hover {
+#leaderboard tbody tr:nth-child(3):hover,
+.player-table tbody tr.podium-1:hover,
+.player-table tbody tr.podium-2:hover,
+.player-table tbody tr.podium-3:hover {
     background: var(--row-hover);
 }
 
@@ -1077,31 +1080,3 @@ body.modal-open {
     text-align: center;
 }
 
-/* Podium tinting for the player's top-3 runs — left stripe + colored score,
-   matching the leaderboard's gold/silver/bronze palette. No size bump. */
-.player-table tbody tr.podium-1 {
-    background: var(--rank-gold-bg);
-    box-shadow: inset 3px 0 0 var(--rank-gold);
-}
-.player-table tbody tr.podium-1 .col-score {
-    color: var(--rank-gold);
-}
-.player-table tbody tr.podium-2 {
-    background: var(--rank-silver-bg);
-    box-shadow: inset 3px 0 0 var(--rank-silver);
-}
-.player-table tbody tr.podium-2 .col-score {
-    color: var(--rank-silver);
-}
-.player-table tbody tr.podium-3 {
-    background: var(--rank-bronze-bg);
-    box-shadow: inset 3px 0 0 var(--rank-bronze);
-}
-.player-table tbody tr.podium-3 .col-score {
-    color: var(--rank-bronze);
-}
-.player-table tbody tr.podium-1:hover,
-.player-table tbody tr.podium-2:hover,
-.player-table tbody tr.podium-3:hover {
-    background: var(--row-hover);
-}

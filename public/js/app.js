@@ -12,11 +12,9 @@
     };
 
     var cache = {};
-    var fetchGen = 0;
     var hofCache = {};
-    var hofFetchGen = 0;
     var playerCache = {};
-    var playerFetchGen = 0;
+    var fetchGen = 0;
 
     var els = {
         playerModal: document.getElementById("player-modal"),
@@ -110,12 +108,6 @@
 
     function pad(n) {
         return n < 10 ? "0" + n : "" + n;
-    }
-
-    function pad3(n) {
-        if (n < 10) return "00" + n;
-        if (n < 100) return "0" + n;
-        return "" + n;
     }
 
     function formatDate(iso) {
@@ -240,44 +232,51 @@
         }
     }
 
-    function fetchLeaderboard() {
-        var resolved = resolveMonth();
-        var key = state.gameMode + ":" + resolved;
-
-        if (cache[key]) {
-            render(cache[key]);
+    // Shared fetch + cache + stale-response guard. `onLoading` / `onError` let
+    // each endpoint choose where its loading and error UI lives.
+    function fetchCached(opts) {
+        var cached = opts.cacheStore[opts.cacheKey];
+        if (cached) {
+            opts.onSuccess(cached);
             return;
         }
-
-        showLoading();
-
+        opts.onLoading();
         var gen = ++fetchGen;
-        var params = new URLSearchParams();
-        params.set("game_mode", state.gameMode);
-        if (resolved) {
-            params.set("month", resolved);
-        }
-
-        fetch("api/leaderboard?" + params.toString())
+        fetch(opts.url)
             .then(function (res) {
-                if (!res.ok) {
-                    throw new Error("request");
-                }
+                if (res.status === 404) throw new Error("notfound");
+                if (!res.ok) throw new Error("request");
                 return res.json();
             })
             .then(function (data) {
                 if (gen !== fetchGen) return;
-                cache[key] = data;
-                render(data);
+                opts.cacheStore[opts.cacheKey] = data;
+                opts.onSuccess(data);
             })
             .catch(function (err) {
                 if (gen !== fetchGen) return;
-                if (err.message === "request") {
-                    showError("Failed to load leaderboard. Please try again later.");
-                } else {
-                    showError("Something went wrong while reading the response.");
-                }
+                opts.onError(err.message);
             });
+    }
+
+    function fetchLeaderboard() {
+        var resolved = resolveMonth();
+        var params = new URLSearchParams();
+        params.set("game_mode", state.gameMode);
+        if (resolved) params.set("month", resolved);
+
+        fetchCached({
+            url: "api/leaderboard?" + params.toString(),
+            cacheStore: cache,
+            cacheKey: state.gameMode + ":" + resolved,
+            onLoading: showLoading,
+            onSuccess: render,
+            onError: function (kind) {
+                showError(kind === "request"
+                    ? "Failed to load leaderboard. Please try again later."
+                    : "Something went wrong while reading the response.");
+            }
+        });
     }
 
     function render(data) {
@@ -306,12 +305,12 @@
             var hasStats = new Date(s.created_at) >= statsCutoff;
 
             tr.innerHTML =
-                '<td class="col-rank">' + escapeHtml(String(s.rank)) + "</td>" +
+                '<td class="col-rank">' + s.rank + "</td>" +
                 '<td class="col-player">' + playerLink(s.player) + "</td>" +
-                '<td class="col-maps">' + (hasStats ? escapeHtml(String(s.maps_completed)) : "") + "</td>" +
-                '<td class="col-skipped">' + (hasStats ? escapeHtml(String(s.maps_skipped)) : "") + "</td>" +
-                '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
-                '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + escapeHtml(formatDate(s.created_at)) + "</td>";
+                '<td class="col-maps">' + (hasStats ? s.maps_completed : "") + "</td>" +
+                '<td class="col-skipped">' + (hasStats ? s.maps_skipped : "") + "</td>" +
+                '<td class="col-score">' + formatScore(s.score) + "</td>" +
+                '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + formatDate(s.created_at) + "</td>";
 
             els.body.appendChild(tr);
         }
@@ -335,34 +334,18 @@
     // --- Hall of Fame ---
     function fetchHallOfFame() {
         var mode = state.gameMode;
-        if (hofCache[mode]) {
-            renderHof(hofCache[mode]);
-            return;
-        }
-
-        showLoading();
-
-        var gen = ++hofFetchGen;
-        fetch("api/halloffame?game_mode=" + encodeURIComponent(mode))
-            .then(function (res) {
-                if (!res.ok) {
-                    throw new Error("request");
-                }
-                return res.json();
-            })
-            .then(function (data) {
-                if (gen !== hofFetchGen) return;
-                hofCache[mode] = data;
-                renderHof(data);
-            })
-            .catch(function (err) {
-                if (gen !== hofFetchGen) return;
-                if (err.message === "request") {
-                    showError("Failed to load hall of fame. Please try again later.");
-                } else {
-                    showError("Something went wrong while reading the response.");
-                }
-            });
+        fetchCached({
+            url: "api/halloffame?game_mode=" + encodeURIComponent(mode),
+            cacheStore: hofCache,
+            cacheKey: mode,
+            onLoading: showLoading,
+            onSuccess: renderHof,
+            onError: function (kind) {
+                showError(kind === "request"
+                    ? "Failed to load hall of fame. Please try again later."
+                    : "Something went wrong while reading the response.");
+            }
+        });
     }
 
     function renderHof(data) {
@@ -391,7 +374,7 @@
                 repeat("🥉", e.bronze);  // 🥉
             var tr = document.createElement("tr");
             tr.innerHTML =
-                '<td class="col-rank">' + escapeHtml(String(e.rank)) + "</td>" +
+                '<td class="col-rank">' + e.rank + "</td>" +
                 '<td class="col-player">' + playerLink(e.player) + "</td>" +
                 '<td class="col-trophies">' + trophies + "</td>";
             els.hofBody.appendChild(tr);
@@ -419,40 +402,26 @@
     }
 
     function fetchPlayer() {
-        var key = state.playerID + ":" + state.playerSig;
-        if (playerCache[key]) {
-            renderPlayer(playerCache[key]);
-            return;
-        }
-
-        showPlayerLoading();
-
-        var gen = ++playerFetchGen;
         var params = new URLSearchParams();
         params.set("id", state.playerID);
         params.set("t", state.playerSig);
 
-        fetch("api/player?" + params.toString())
-            .then(function (res) {
-                if (res.status === 404) throw new Error("notfound");
-                if (!res.ok) throw new Error("request");
-                return res.json();
-            })
-            .then(function (data) {
-                if (gen !== playerFetchGen) return;
-                playerCache[key] = data;
-                renderPlayer(data);
-            })
-            .catch(function (err) {
-                if (gen !== playerFetchGen) return;
-                if (err.message === "notfound") {
+        fetchCached({
+            url: "api/player?" + params.toString(),
+            cacheStore: playerCache,
+            cacheKey: state.playerID + ":" + state.playerSig,
+            onLoading: showPlayerLoading,
+            onSuccess: renderPlayer,
+            onError: function (kind) {
+                if (kind === "notfound") {
                     showPlayerError("Player not found or link expired.");
-                } else if (err.message === "request") {
+                } else if (kind === "request") {
                     showPlayerError("Failed to load player. Please try again later.");
                 } else {
                     showPlayerError("Something went wrong while reading the response.");
                 }
-            });
+            }
+        });
     }
 
     function renderPlayer(data) {
@@ -475,9 +444,9 @@
         var totalSkips = authorStats.skips + goldStats.skips;
 
         els.playerSummary.innerHTML =
-            summaryItem("Runs", String(totalRuns)) +
-            summaryItem("Medals", String(totalMedals)) +
-            summaryItem("Skipped", String(totalSkips));
+            summaryItem("Runs", totalRuns) +
+            summaryItem("Medals", totalMedals) +
+            summaryItem("Skipped", totalSkips);
 
         renderPlayerMode(byMode.author, authorStats, els.playerBodyAuthor, els.playerEmptyAuthor, els.playerStatsAuthor);
         renderPlayerMode(byMode.gold, goldStats, els.playerBodyGold, els.playerEmptyGold, els.playerStatsGold);
@@ -498,7 +467,8 @@
     }
 
     function summaryItem(label, value) {
-        return '<li><span class="summary-label">' + escapeHtml(label) + '</span><span class="summary-value">' + escapeHtml(value) + '</span></li>';
+        // label is a static string; value is a number we control.
+        return '<li><span class="summary-label">' + label + '</span><span class="summary-value">' + value + '</span></li>';
     }
 
     function renderPlayerMode(mode, stats, tbody, empty, statsEl) {
@@ -527,10 +497,10 @@
             var tr = document.createElement("tr");
             if (podiumClass[i]) tr.className = podiumClass[i];
             tr.innerHTML =
-                '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + escapeHtml(formatDate(s.created_at)) + "</td>" +
-                '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +
-                '<td class="col-maps">' + escapeHtml(String(s.maps_completed)) + "</td>" +
-                '<td class="col-skipped">' + escapeHtml(String(s.maps_skipped)) + "</td>";
+                '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + formatDate(s.created_at) + "</td>" +
+                '<td class="col-score">' + formatScore(s.score) + "</td>" +
+                '<td class="col-maps">' + s.maps_completed + "</td>" +
+                '<td class="col-skipped">' + s.maps_skipped + "</td>";
             tbody.appendChild(tr);
         }
     }
