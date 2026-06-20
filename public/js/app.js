@@ -673,11 +673,12 @@
 
     function dismissPlayer() {
         if (state.view !== "player") return;
-        if (history.length > 1) {
-            history.back();
-        } else {
-            location.hash = "";
-        }
+        // Navigate forward to the main view rather than walking history back —
+        // history.back() can land on another player URL (e.g. after editing
+        // the hash directly) and reopen the modal.
+        var h = state.gameMode || "author";
+        if (state.month) h += "/" + state.month;
+        location.hash = "#" + h;
     }
 
     els.playerClose.addEventListener("click", dismissPlayer);
