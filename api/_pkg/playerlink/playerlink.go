@@ -14,7 +14,7 @@ import (
 )
 
 // SigLen is the length of the truncated base64url HMAC (~96 bits — unforgeable, short).
-const SigLen = 16
+const SigLen = 8
 
 func Sign(openplanetID string) string {
 	secret := config.Env.PlayerLinkSecret
