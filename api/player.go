@@ -26,17 +26,8 @@ type playerScoreJSON struct {
 }
 
 type playerModeJSON struct {
-	GameMode  string            `json:"game_mode"`
-	BestScore int32             `json:"best_score"`
-	RunCount  int               `json:"run_count"`
-	Scores    []playerScoreJSON `json:"scores"`
-}
-
-type playerSummaryJSON struct {
-	TotalRuns    int    `json:"total_runs"`
-	MedalsEarned int64  `json:"medals_earned"`
-	MapsSkipped  int64  `json:"maps_skipped"`
-	ActiveSince  string `json:"active_since"`
+	GameMode string            `json:"game_mode"`
+	Scores   []playerScoreJSON `json:"scores"`
 }
 
 type playerHeaderJSON struct {
@@ -45,9 +36,8 @@ type playerHeaderJSON struct {
 }
 
 type playerResponse struct {
-	Player  playerHeaderJSON  `json:"player"`
-	Summary playerSummaryJSON `json:"summary"`
-	Modes   []playerModeJSON  `json:"modes"`
+	Player playerHeaderJSON `json:"player"`
+	Modes  []playerModeJSON `json:"modes"`
 }
 
 func Player(w http.ResponseWriter, r *http.Request) {
@@ -101,17 +91,14 @@ func buildPlayerResponse(d *db.PlayerDetail) playerResponse {
 		"author": {GameMode: "author", Scores: []playerScoreJSON{}},
 		"gold":   {GameMode: "gold", Scores: []playerScoreJSON{}},
 	}
-
-	var totalMedals, totalSkips int64
-	var earliest time.Time
 	for _, s := range d.Scores {
-		createdAt := time.Time{}
-		if s.CreatedAt != nil {
-			createdAt = *s.CreatedAt
-		}
 		m, ok := modes[s.GameMode.String()]
 		if !ok {
 			continue
+		}
+		createdAt := time.Time{}
+		if s.CreatedAt != nil {
+			createdAt = *s.CreatedAt
 		}
 		m.Scores = append(m.Scores, playerScoreJSON{
 			Score:         s.Score,
@@ -120,32 +107,11 @@ func buildPlayerResponse(d *db.PlayerDetail) playerResponse {
 			DurationMs:    s.DurationMs,
 			CreatedAt:     createdAt,
 		})
-		m.RunCount++
-		if s.Score > m.BestScore {
-			m.BestScore = s.Score
-		}
-		totalMedals += int64(s.MapsCompleted)
-		totalSkips += int64(s.MapsSkipped)
-		if !createdAt.IsZero() && (earliest.IsZero() || createdAt.Before(earliest)) {
-			earliest = createdAt
-		}
 	}
-
-	activeSince := ""
-	if !earliest.IsZero() {
-		activeSince = earliest.Format("2006-01-02")
-	}
-
 	return playerResponse{
 		Player: playerHeaderJSON{
 			OpenplanetID: d.OpenplanetID,
 			DisplayName:  d.DisplayName,
-		},
-		Summary: playerSummaryJSON{
-			TotalRuns:    len(d.Scores),
-			MedalsEarned: totalMedals,
-			MapsSkipped:  totalSkips,
-			ActiveSince:  activeSince,
 		},
 		Modes: []playerModeJSON{*modes["author"], *modes["gold"]},
 	}

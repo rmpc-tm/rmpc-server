@@ -53,11 +53,11 @@ func init() {
 	Env.ScoreCooldown = durationEnv("SCORE_COOLDOWN", 10*time.Minute)
 	Env.AuthRateLimit = 10
 	Env.ActivityCacheTTL = durationEnv("ACTIVITY_CACHE_TTL", 4*time.Hour)
-	Env.LeaderboardCacheTTL = durationEnv("LEADERBOARD_CACHE_TTL", 10*time.Minute)
+	Env.LeaderboardCacheTTL = durationEnv("LEADERBOARD_CACHE_TTL", 15*time.Minute)
 	Env.WorldRecordsCacheTTL = durationEnv("WORLDRECORDS_CACHE_TTL", 60*time.Minute)
 	Env.HallOfFameCacheTTL = durationEnv("HALLOFFAME_CACHE_TTL", 6*time.Hour)
 	Env.PlayerLinkSecret = os.Getenv("PLAYER_LINK_SECRET")
-	Env.PlayerCacheTTL = durationEnv("PLAYER_CACHE_TTL", 6*time.Hour)
+	Env.PlayerCacheTTL = durationEnv("PLAYER_CACHE_TTL", 15*time.Minute)
 }
 
 func stringEnv(key, fallback string) string {

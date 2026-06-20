@@ -48,7 +48,7 @@ type PlayerDetail struct {
 
 // GetPlayerDetail returns a player and all their author/gold scores ordered
 // newest first. Returns (nil, nil) when the player doesn't exist, is banned,
-// or has no scores in these modes — the handler treats this as a 404.
+// or has no scores in these modes.
 func GetPlayerDetail(db *sql.DB, openplanetID string) (*PlayerDetail, error) {
 	stmt := SELECT(
 		table.Players.OpenplanetID,

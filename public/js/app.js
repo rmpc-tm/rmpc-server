@@ -465,27 +465,57 @@
         els.playerName.textContent = data.player.display_name;
         els.playerTmio.href = "https://trackmania.io/#/player/" + encodeURIComponent(data.player.openplanet_id);
 
-        els.playerSummary.innerHTML =
-            summaryItem("Runs", String(data.summary.total_runs)) +
-            summaryItem("Medals", String(data.summary.medals_earned)) +
-            summaryItem("Skipped", String(data.summary.maps_skipped)) +
-            summaryItem("Since", data.summary.active_since || "—");
-
         var byMode = {};
         for (var i = 0; i < data.modes.length; i++) {
             byMode[data.modes[i].game_mode] = data.modes[i];
         }
-        renderPlayerMode(byMode.author, els.playerBodyAuthor, els.playerEmptyAuthor, els.playerStatsAuthor);
-        renderPlayerMode(byMode.gold, els.playerBodyGold, els.playerEmptyGold, els.playerStatsGold);
+        var authorStats = computeModeStats(byMode.author);
+        var goldStats = computeModeStats(byMode.gold);
+
+        var totalRuns = authorStats.runs + goldStats.runs;
+        var totalMedals = authorStats.medals + goldStats.medals;
+        var totalSkips = authorStats.skips + goldStats.skips;
+        var earliest = earlierOf(authorStats.earliest, goldStats.earliest);
+
+        els.playerSummary.innerHTML =
+            summaryItem("Runs", String(totalRuns)) +
+            summaryItem("Medals", String(totalMedals)) +
+            summaryItem("Skipped", String(totalSkips)) +
+            summaryItem("Since", earliest ? formatDate(earliest) : "—");
+
+        renderPlayerMode(byMode.author, authorStats, els.playerBodyAuthor, els.playerEmptyAuthor, els.playerStatsAuthor);
+        renderPlayerMode(byMode.gold, goldStats, els.playerBodyGold, els.playerEmptyGold, els.playerStatsGold);
+    }
+
+    function computeModeStats(mode) {
+        var stats = { runs: 0, best: 0, medals: 0, skips: 0, earliest: null };
+        if (!mode || !mode.scores) return stats;
+        var scores = mode.scores;
+        stats.runs = scores.length;
+        for (var i = 0; i < scores.length; i++) {
+            var s = scores[i];
+            if (s.score > stats.best) stats.best = s.score;
+            stats.medals += s.maps_completed;
+            stats.skips += s.maps_skipped;
+            var d = new Date(s.created_at).getTime();
+            if (!stats.earliest || d < stats.earliest) stats.earliest = d;
+        }
+        return stats;
+    }
+
+    function earlierOf(a, b) {
+        if (!a) return b;
+        if (!b) return a;
+        return a < b ? a : b;
     }
 
     function summaryItem(label, value) {
         return '<li><span class="summary-label">' + escapeHtml(label) + '</span><span class="summary-value">' + escapeHtml(value) + '</span></li>';
     }
 
-    function renderPlayerMode(mode, tbody, empty, statsEl) {
+    function renderPlayerMode(mode, stats, tbody, empty, statsEl) {
         tbody.innerHTML = "";
-        if (!mode || mode.run_count === 0) {
+        if (!mode || stats.runs === 0) {
             statsEl.textContent = "no runs";
             tbody.parentElement.style.display = "none";
             empty.style.display = "block";
@@ -493,7 +523,7 @@
         }
         tbody.parentElement.style.display = "";
         empty.style.display = "none";
-        statsEl.textContent = "best " + formatScore(mode.best_score) + " · " + mode.run_count + " run" + (mode.run_count === 1 ? "" : "s");
+        statsEl.textContent = "best " + formatScore(stats.best) + " · " + stats.runs + " run" + (stats.runs === 1 ? "" : "s");
 
         for (var i = 0; i < mode.scores.length; i++) {
             var s = mode.scores[i];
