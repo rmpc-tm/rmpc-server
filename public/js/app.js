@@ -19,8 +19,8 @@
     var playerFetchGen = 0;
 
     var els = {
-        viewMain: document.getElementById("view-main"),
-        viewPlayer: document.getElementById("view-player"),
+        playerModal: document.getElementById("player-modal"),
+        playerClose: document.getElementById("player-close"),
         body: document.getElementById("leaderboard-body"),
         loading: document.getElementById("loading"),
         error: document.getElementById("error"),
@@ -40,7 +40,6 @@
         playerError: document.getElementById("player-error"),
         playerContent: document.getElementById("player-content"),
         playerName: document.getElementById("player-name"),
-        playerBack: document.getElementById("player-back"),
         playerSummary: document.getElementById("player-summary"),
         playerStatsAuthor: document.getElementById("player-stats-author"),
         playerStatsGold: document.getElementById("player-stats-gold"),
@@ -136,14 +135,14 @@
         els.error.style.display = "none";
     }
 
-    function showMainView() {
-        els.viewMain.style.display = "";
-        els.viewPlayer.style.display = "none";
+    function openPlayerModal() {
+        els.playerModal.style.display = "";
+        document.body.classList.add("modal-open");
     }
 
-    function showPlayerView() {
-        els.viewMain.style.display = "none";
-        els.viewPlayer.style.display = "";
+    function closePlayerModal() {
+        els.playerModal.style.display = "none";
+        document.body.classList.remove("modal-open");
     }
 
     function showLoading() {
@@ -228,11 +227,11 @@
 
     function fetchData() {
         if (state.view === "player") {
-            showPlayerView();
+            openPlayerModal();
             fetchPlayer();
             return;
         }
-        showMainView();
+        closePlayerModal();
         els.hofDescription.style.display = state.month === "hof" ? "" : "none";
         if (state.month === "hof") {
             fetchHallOfFame();
@@ -662,12 +661,21 @@
         }
     });
 
-    els.playerBack.addEventListener("click", function () {
+    function dismissPlayer() {
+        if (state.view !== "player") return;
         if (history.length > 1) {
             history.back();
         } else {
             location.hash = "";
         }
+    }
+
+    els.playerClose.addEventListener("click", dismissPlayer);
+    els.playerModal.addEventListener("click", function (e) {
+        if (e.target.hasAttribute("data-modal-close")) dismissPlayer();
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") dismissPlayer();
     });
 
     window.addEventListener("hashchange", applyHash);
