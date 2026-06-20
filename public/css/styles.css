@@ -978,15 +978,16 @@ body.modal-open {
 }
 
 .player-header h2 a {
-    color: inherit;
+    color: var(--link);
     text-decoration: none;
-    border-bottom: 1px dotted var(--border-strong);
-    transition: color 0.12s ease, border-color 0.12s ease;
+    transition: color 0.1s ease;
 }
 
 .player-header h2 a:hover {
     color: var(--link-hover);
-    border-color: var(--link-hover);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
 }
 
 .player-summary {
@@ -1006,7 +1007,7 @@ body.modal-open {
 
 .player-summary .summary-label {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.6rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--text-secondary);
@@ -1015,9 +1016,10 @@ body.modal-open {
 .player-summary .summary-value {
     font-family: 'IBM Plex Mono', monospace;
     font-variant-numeric: tabular-nums;
-    font-size: 1rem;
+    font-size: 1.4rem;
     font-weight: 600;
     color: var(--heading);
+    line-height: 1.1;
 }
 
 .player-grid {
@@ -1073,4 +1075,33 @@ body.modal-open {
     font-size: 0.75rem;
     color: var(--text-secondary);
     text-align: center;
+}
+
+/* Podium tinting for the player's top-3 runs — left stripe + colored score,
+   matching the leaderboard's gold/silver/bronze palette. No size bump. */
+.player-table tbody tr.podium-1 {
+    background: var(--rank-gold-bg);
+    box-shadow: inset 3px 0 0 var(--rank-gold);
+}
+.player-table tbody tr.podium-1 .col-score {
+    color: var(--rank-gold);
+}
+.player-table tbody tr.podium-2 {
+    background: var(--rank-silver-bg);
+    box-shadow: inset 3px 0 0 var(--rank-silver);
+}
+.player-table tbody tr.podium-2 .col-score {
+    color: var(--rank-silver);
+}
+.player-table tbody tr.podium-3 {
+    background: var(--rank-bronze-bg);
+    box-shadow: inset 3px 0 0 var(--rank-bronze);
+}
+.player-table tbody tr.podium-3 .col-score {
+    color: var(--rank-bronze);
+}
+.player-table tbody tr.podium-1:hover,
+.player-table tbody tr.podium-2:hover,
+.player-table tbody tr.podium-3:hover {
+    background: var(--row-hover);
 }

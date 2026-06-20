@@ -511,11 +511,21 @@
         }
         tbody.parentElement.style.display = "";
         empty.style.display = "none";
-        statsEl.textContent = "best " + formatScore(stats.best) + " · " + stats.runs + " run" + (stats.runs === 1 ? "" : "s");
+        statsEl.textContent = stats.runs + " run" + (stats.runs === 1 ? "" : "s");
+
+        // Tag the top 3 runs (by score, ties broken by date order) so CSS can
+        // show the same medal accents as the leaderboard podium.
+        var podiumClass = new Array(mode.scores.length);
+        var ranked = mode.scores.map(function (s, i) { return { i: i, score: s.score }; });
+        ranked.sort(function (a, b) { return b.score - a.score; });
+        for (var r = 0; r < Math.min(3, ranked.length); r++) {
+            podiumClass[ranked[r].i] = "podium-" + (r + 1);
+        }
 
         for (var i = 0; i < mode.scores.length; i++) {
             var s = mode.scores[i];
             var tr = document.createElement("tr");
+            if (podiumClass[i]) tr.className = podiumClass[i];
             tr.innerHTML =
                 '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + escapeHtml(formatDate(s.created_at)) + "</td>" +
                 '<td class="col-score">' + escapeHtml(formatScore(s.score)) + "</td>" +

@@ -67,6 +67,7 @@ func GetPlayerDetail(db *sql.DB, openplanetID string) (*PlayerDetail, error) {
 		table.Players.OpenplanetID.EQ(String(openplanetID)),
 		table.BannedPlayers.ID.IS_NULL(),
 		table.Scores.GameMode.IN(enum.GameMode.Author, enum.GameMode.Gold),
+		table.Scores.Score.GT(Int(0)),
 	)).ORDER_BY(
 		table.Scores.CreatedAt.DESC(),
 	)
