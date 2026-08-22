@@ -284,8 +284,8 @@
 
     // Rows are revealed PAGE_SIZE at a time; a tail shorter than MIN_TAIL is
     // revealed with the previous page instead of leaving a near-empty click.
-    var PAGE_SIZE = 25;
-    var MIN_TAIL = 10;
+    var PAGE_SIZE = 50;
+    var MIN_TAIL = 15;
     var STATS_CUTOFF = new Date("2026-02-01");
 
     var shownScores = [];
