@@ -24,6 +24,8 @@
         error: document.getElementById("error"),
         table: document.getElementById("leaderboard"),
         tableWrap: document.getElementById("leaderboard-wrap"),
+        showMore: document.getElementById("show-more"),
+        showMoreLabel: document.getElementById("show-more-label"),
         empty: document.getElementById("empty-state"),
         periodToggle: document.getElementById("period-toggle"),
         modeToggle: document.getElementById("game-mode-toggle"),
@@ -121,6 +123,7 @@
 
     function hideAllViews() {
         els.tableWrap.style.display = "none";
+        els.showMore.style.display = "none";
         els.empty.style.display = "none";
         els.hofWrap.style.display = "none";
         els.hofEmpty.style.display = "none";
@@ -279,6 +282,15 @@
         });
     }
 
+    // Rows are revealed PAGE_SIZE at a time; a tail shorter than MIN_TAIL is
+    // revealed with the previous page instead of leaving a near-empty click.
+    var PAGE_SIZE = 50;
+    var MIN_TAIL = 15;
+    var STATS_CUTOFF = new Date("2026-02-01");
+
+    var shownScores = [];
+    var shownCount = 0;
+
     function render(data) {
         els.loading.style.display = "none";
         els.error.style.display = "none";
@@ -289,7 +301,10 @@
 
         if (scores.length === 0) {
             els.tableWrap.style.display = "none";
+            els.showMore.style.display = "none";
             els.empty.style.display = "flex";
+            shownScores = [];
+            shownCount = 0;
             return;
         }
 
@@ -297,23 +312,43 @@
         els.empty.style.display = "none";
 
         els.body.innerHTML = "";
+        shownScores = scores;
+        shownCount = 0;
+        revealMore();
+    }
 
-        var statsCutoff = new Date("2026-02-01");
-        for (var i = 0; i < scores.length; i++) {
-            var s = scores[i];
-            var tr = document.createElement("tr");
-            var hasStats = new Date(s.created_at) >= statsCutoff;
+    function revealMore() {
+        var total = shownScores.length;
+        var target = shownCount + PAGE_SIZE;
+        if (total - target < MIN_TAIL) target = total;
 
-            tr.innerHTML =
-                '<td class="col-rank">' + s.rank + "</td>" +
-                '<td class="col-player">' + playerLink(s.player) + "</td>" +
-                '<td class="col-maps">' + (hasStats ? s.maps_completed : "") + "</td>" +
-                '<td class="col-skipped">' + (hasStats ? s.maps_skipped : "") + "</td>" +
-                '<td class="col-score">' + formatScore(s.score) + "</td>" +
-                '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + formatDate(s.created_at) + "</td>";
-
-            els.body.appendChild(tr);
+        for (var i = shownCount; i < target; i++) {
+            els.body.appendChild(scoreRow(shownScores[i]));
         }
+        shownCount = target;
+
+        var remaining = total - shownCount;
+        if (remaining <= 0) {
+            els.showMore.style.display = "none";
+        } else {
+            els.showMore.style.display = "";
+            els.showMoreLabel.textContent = "Show more (" + remaining + ")";
+        }
+    }
+
+    function scoreRow(s) {
+        var tr = document.createElement("tr");
+        var hasStats = new Date(s.created_at) >= STATS_CUTOFF;
+
+        tr.innerHTML =
+            '<td class="col-rank">' + s.rank + "</td>" +
+            '<td class="col-player">' + playerLink(s.player) + "</td>" +
+            '<td class="col-maps">' + (hasStats ? s.maps_completed : "") + "</td>" +
+            '<td class="col-skipped">' + (hasStats ? s.maps_skipped : "") + "</td>" +
+            '<td class="col-score">' + formatScore(s.score) + "</td>" +
+            '<td class="col-date" title="' + escapeHtml(new Date(s.created_at).toLocaleString()) + '">' + formatDate(s.created_at) + "</td>";
+
+        return tr;
     }
 
     var escapeEl = document.createElement("div");
@@ -352,6 +387,7 @@
         els.loading.style.display = "none";
         els.error.style.display = "none";
         els.tableWrap.style.display = "none";
+        els.showMore.style.display = "none";
         els.empty.style.display = "none";
 
         var entries = (data && data.entries) || [];
@@ -619,6 +655,8 @@
         syncUI();
         fetchData();
     }
+
+    els.showMore.addEventListener("click", revealMore);
 
     els.periodToggle.addEventListener("click", onPeriodClick);
     els.hofBtn.addEventListener("click", onPeriodClick);

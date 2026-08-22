@@ -13,6 +13,9 @@ import (
 	"rmpc-server/db/.gen/rmpc/public/table"
 )
 
+// Number of ranked entries returned per leaderboard.
+const leaderboardLimit = 100
+
 var gameModeExpression = map[string]StringExpression{
 	"author": enum.GameMode.Author,
 	"gold":   enum.GameMode.Gold,
@@ -105,7 +108,7 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 		bestScores,
 	).ORDER_BY(
 		bsScore.DESC(),
-	).LIMIT(50)
+	).LIMIT(leaderboardLimit)
 
 	var entries []LeaderboardEntry
 	err := stmt.Query(db, &entries)
