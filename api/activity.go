@@ -29,9 +29,7 @@ func Activity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The range ends on today (UTC). Anchor on midnight so the buckets don't
-	// slide as the wall clock advances within a day, and query from exactly
-	// that start so the window covers the days rendered and no more.
+	// Anchor on UTC midnight so the buckets don't slide as the day advances.
 	now := time.Now().UTC()
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	start := today.AddDate(0, 0, -(days - 1))

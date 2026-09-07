@@ -14,15 +14,10 @@ type activityRow struct {
 	Count int64     `alias:"medals.total"`
 }
 
-// GetMedalActivity returns the total maps completed per UTC day from since
-// onwards, keyed by date string (YYYY-MM-DD). Days with no activity are absent
-// from the map. since should be a UTC midnight; the caller decides the range so
-// the query window matches the days it renders exactly.
-//
-// Both the grouping and the key formatting are pinned to UTC. A bare
-// CAST(... AS DATE) buckets by the connection's TimeZone, and lib/pq renders
-// the result in that zone too, so on a connection set to anything but UTC the
-// day a score belongs to would disagree with the caller's UTC days.
+// GetMedalActivity returns total maps completed per UTC day from since onwards,
+// keyed as YYYY-MM-DD; days with no activity are absent. since should be a UTC
+// midnight. Grouping and key formatting are both pinned to UTC, otherwise the
+// connection's TimeZone decides which day a score falls in.
 func GetMedalActivity(db *sql.DB, since time.Time) (map[string]int64, error) {
 	bucket := DATE_TRUNC(DAY, table.Scores.CreatedAt, "UTC")
 
