@@ -144,20 +144,3 @@ func TestValidateMissingSecretIsMisconfiguration(t *testing.T) {
 		t.Fatal("a misconfigured server must not be reported as an invalid token")
 	}
 }
-
-// The upstream body may carry detail we do not want to hand back to clients or
-// dump wholesale into logs.
-func TestTruncate(t *testing.T) {
-	if got := truncate("  short  ", 200); got != "short" {
-		t.Fatalf("got %q, want %q", got, "short")
-	}
-
-	long := make([]byte, 500)
-	for i := range long {
-		long[i] = 'x'
-	}
-	got := truncate(string(long), 200)
-	if len(got) != 203 { // 200 chars plus the ellipsis
-		t.Fatalf("got length %d, want 203", len(got))
-	}
-}

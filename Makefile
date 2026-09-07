@@ -10,21 +10,37 @@ JET_DSN ?= $(or $(DB_DSN),$(LOCAL_DSN))
 JET_BIN  = $(shell go env GOPATH)/bin/jet
 LINT_BIN = $(shell go env GOPATH)/bin/golangci-lint
 
-.PHONY: build vet test lint generate migrate migrate-down dev clean db-start db-stop db-reset
+# The "..." wildcard skips any directory whose name starts with "_" or ".", so
+# ./... does not match anything under api/_pkg. Those packages have to be named
+# explicitly or they are never built, vetted, tested or linted. Discover them
+# rather than listing them, so a new package is picked up automatically.
+MODULE        = $(shell go list -m)
+INTERNAL_PKGS = $(shell find api/_pkg -name '*.go' -exec dirname {} \; | sort -u | sed 's|^|$(MODULE)/|')
+PKGS          = ./... $(INTERNAL_PKGS)
+
+.PHONY: build vet test lint fmt check pkgs generate migrate migrate-down dev clean db-start db-stop db-reset
+
+pkgs: ## List every package the checks cover
+	@for p in $(PKGS); do echo $$p; done
 
 build: ## Build all packages
-	go build ./api/...
+	go build $(PKGS)
 
 vet: ## Run go vet
-	go vet ./api/...
+	go vet $(PKGS)
 
-TEST_PKGS = rmpc-server/api/_pkg/auth rmpc-server/api/_pkg/config rmpc-server/api/_pkg/ratelimit
+fmt: ## Check formatting (prints offending files)
+	@out="$$(gofmt -l api cmd)"; \
+	if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi; \
+	echo "gofmt: clean"
 
 test: ## Run tests
-	go test $(TEST_PKGS) -v
+	go test $(PKGS)
+
+check: fmt vet test ## Everything CI runs
 
 lint: $(LINT_BIN) ## Run golangci-lint
-	$(LINT_BIN) run ./api/...
+	$(LINT_BIN) run $(PKGS)
 
 $(LINT_BIN):
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest

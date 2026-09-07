@@ -11,11 +11,11 @@ import (
 )
 
 type WorldRecord struct {
-	GameMode    string     `alias:"scores.game_mode"`
-	Score       int32      `alias:"scores.score"`
-	DisplayName string     `alias:"players.display_name"`
-	OpenplanetID string    `alias:"players.openplanet_id"`
-	CreatedAt   *time.Time `alias:"scores.created_at"`
+	GameMode     string     `alias:"scores.game_mode"`
+	Score        int32      `alias:"scores.score"`
+	DisplayName  string     `alias:"players.display_name"`
+	OpenplanetID string     `alias:"players.openplanet_id"`
+	CreatedAt    *time.Time `alias:"scores.created_at"`
 }
 
 type WorldRecordParams struct {

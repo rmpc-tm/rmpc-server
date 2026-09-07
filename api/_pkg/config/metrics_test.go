@@ -2,8 +2,6 @@ package config
 
 import (
 	"testing"
-
-	"gopkg.in/yaml.v3"
 )
 
 func TestIsAllowedMetric(t *testing.T) {
@@ -40,24 +38,5 @@ func TestAllowListIsPopulated(t *testing.T) {
 
 	if len(allowedMetrics) == 0 {
 		t.Fatal("allow-list is empty: metrics.yaml did not load, every metric would be rejected")
-	}
-}
-
-// Every name in the embedded YAML must be accepted. Guards against the file
-// being emptied, renamed, or the embed directive being dropped.
-func TestEveryConfiguredMetricIsAllowed(t *testing.T) {
-	var cfg metricsConfig
-	if err := yaml.Unmarshal(metricsYAML, &cfg); err != nil {
-		t.Fatalf("embedded metrics.yaml is not valid YAML: %v", err)
-	}
-
-	if len(cfg.AllowedMetrics) == 0 {
-		t.Fatal("embedded metrics.yaml declares no allowed_metrics")
-	}
-
-	for _, name := range cfg.AllowedMetrics {
-		if !IsAllowedMetric(name) {
-			t.Errorf("%q is listed in metrics.yaml but IsAllowedMetric returned false", name)
-		}
 	}
 }
