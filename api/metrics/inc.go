@@ -12,6 +12,10 @@ import (
 	"rmpc-server/api/_pkg/response"
 )
 
+func init() {
+	config.Validate()
+}
+
 // Handler handles POST /api/metrics/inc?name=X
 func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {

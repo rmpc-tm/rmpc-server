@@ -91,6 +91,7 @@ dev: ## Run local dev server with mock Openplanet auth
 	DATABASE_URL=$(LOCAL_DSN) \
 	OPENPLANET_PLUGIN_SECRET=dev-secret \
 	OPENPLANET_AUTH_URL=http://localhost:8081/api/auth/validate \
+	PLAYER_LINK_SECRET=dev-link-secret \
 	SCORE_COOLDOWN=5s \
 	go run ./cmd/dev
 
