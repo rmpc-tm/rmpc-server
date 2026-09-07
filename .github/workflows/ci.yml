@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Format, vet, build, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Each step runs separately so a failure names itself in the UI.
+      # All of them go through the Makefile, which names the packages under
+      # api/_pkg explicitly; the ./... wildcard does not match them.
+      - name: Formatting
+        run: make fmt
+
+      - name: Vet
+        run: make vet
+
+      - name: Build
+        run: make build
+
+      - name: Test
+        run: make test
+
+  # golangci-lint is deliberately not wired up yet. The pinned entrypoint
+  # (cmd/golangci-lint) resolves to the v1 line, whose bundled analysis
+  # libraries cannot read export data produced by the Go version in go.mod, so
+  # every run fails before linting anything. Moving to the v2 module path and
+  # config format is tracked separately as L9.
