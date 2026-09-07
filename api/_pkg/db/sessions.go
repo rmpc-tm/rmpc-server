@@ -14,11 +14,14 @@ import (
 )
 
 func CreateSession(db *sql.DB, playerID uuid.UUID, tokenHash string, expiresAt time.Time) error {
-	// One row per player, held by the unique constraint on player_id. A single
-	// upsert is what keeps that true when two logins race: a delete followed by
-	// an insert lets the second login delete before the first has inserted, and
-	// both then insert. Replacing the token also ends the previous session,
-	// which is the intended "one session per player" behaviour.
+	// Delete existing sessions for this player (one session per player)
+	delStmt := table.Sessions.DELETE().WHERE(
+		table.Sessions.PlayerID.EQ(UUID(playerID)),
+	)
+	if _, err := delStmt.Exec(db); err != nil {
+		return err
+	}
+
 	stmt := table.Sessions.INSERT(
 		table.Sessions.PlayerID,
 		table.Sessions.TokenHash,
@@ -27,12 +30,6 @@ func CreateSession(db *sql.DB, playerID uuid.UUID, tokenHash string, expiresAt t
 		playerID,
 		tokenHash,
 		expiresAt,
-	).ON_CONFLICT(table.Sessions.PlayerID).DO_UPDATE(
-		SET(
-			table.Sessions.TokenHash.SET(String(tokenHash)),
-			table.Sessions.ExpiresAt.SET(TimestampzT(expiresAt)),
-			table.Sessions.CreatedAt.SET(TimestampzExpression(NOW())),
-		),
 	)
 
 	_, err := stmt.Exec(db)

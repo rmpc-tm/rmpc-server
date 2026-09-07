@@ -51,30 +51,21 @@ generate: $(JET_BIN) ## Generate go-jet types from database (defaults to local D
 $(JET_BIN):
 	go install github.com/go-jet/jet/v2/cmd/jet@latest
 
-# There is no migration tracking table, so these apply every file every time.
-# That is fine on a fresh database; against one that is already migrated, pass
-# MIGRATION=<path> to apply a single file.
-MIGRATIONS_UP   = $(sort $(wildcard db/migrations/*.up.sql))
-MIGRATIONS_DOWN = $(shell ls -r db/migrations/*.down.sql 2>/dev/null)
+migrate: ## Run migrations (uses local container or DATABASE_URL)
+	@if [ -n "$(DB_DSN)" ]; then \
+		psql "$(DB_DSN)" -f db/migrations/001_initial.up.sql; \
+	else \
+		docker cp db/migrations/001_initial.up.sql $(DB_CONTAINER):/tmp/migration.sql && \
+		docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -f /tmp/migration.sql; \
+	fi
 
-# $(1) is the list of .sql files to apply, in order.
-define run_sql
-	@for f in $(1); do \
-		echo "applying $$f"; \
-		if [ -n "$(DB_DSN)" ]; then \
-			psql "$(DB_DSN)" -v ON_ERROR_STOP=1 -f "$$f" || exit 1; \
-		else \
-			docker cp "$$f" $(DB_CONTAINER):/tmp/migration.sql >/dev/null && \
-			docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -v ON_ERROR_STOP=1 -f /tmp/migration.sql || exit 1; \
-		fi; \
-	done
-endef
-
-migrate: ## Apply migrations in order (MIGRATION=<path> for one file)
-	$(call run_sql,$(if $(MIGRATION),$(MIGRATION),$(MIGRATIONS_UP)))
-
-migrate-down: ## Roll back migrations, newest first (MIGRATION=<path> for one)
-	$(call run_sql,$(if $(MIGRATION),$(MIGRATION),$(MIGRATIONS_DOWN)))
+migrate-down: ## Roll back migrations (uses local container or DATABASE_URL)
+	@if [ -n "$(DB_DSN)" ]; then \
+		psql "$(DB_DSN)" -f db/migrations/001_initial.down.sql; \
+	else \
+		docker cp db/migrations/001_initial.down.sql $(DB_CONTAINER):/tmp/migration.sql && \
+		docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -f /tmp/migration.sql; \
+	fi
 
 db-start: ## Start local Postgres in Docker
 	@docker inspect -f '{{.State.Running}}' $(DB_CONTAINER) 2>/dev/null | grep -q true \
@@ -93,7 +84,8 @@ db-stop: ## Stop and remove local Postgres container
 	@docker rm -f $(DB_CONTAINER) 2>/dev/null || true
 
 db-reset: db-stop db-start ## Recreate local DB and run migrations
-	$(call run_sql,$(MIGRATIONS_UP))
+	@docker cp db/migrations/001_initial.up.sql $(DB_CONTAINER):/tmp/migration.sql
+	@docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -f /tmp/migration.sql
 
 dev: ## Run local dev server with mock Openplanet auth
 	DATABASE_URL=$(LOCAL_DSN) \
