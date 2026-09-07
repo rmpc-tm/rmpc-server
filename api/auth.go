@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -48,11 +49,20 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate with Openplanet
+	// Validate with Openplanet.
 	user, err := auth.ValidateOpenplanetToken(req.OpenplanetToken)
 	if err != nil {
-		slog.Error("openplanet validation error", "error", err)
-		response.Error(w, http.StatusUnauthorized, "invalid openplanet token")
+		switch {
+		case errors.Is(err, auth.ErrInvalidToken):
+			slog.Warn("openplanet rejected token", "error", err)
+			response.Error(w, http.StatusUnauthorized, "invalid openplanet token")
+		case errors.Is(err, auth.ErrMisconfigured):
+			slog.Error("openplanet validation misconfigured", "error", err)
+			response.Error(w, http.StatusInternalServerError, "internal server error")
+		default:
+			slog.Error("openplanet validation unavailable", "error", err)
+			response.Error(w, http.StatusServiceUnavailable, "auth service unavailable")
+		}
 		return
 	}
 

@@ -3,6 +3,7 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -17,6 +18,21 @@ var openplanetClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
+var (
+	// ErrInvalidToken: Openplanet answered and rejected the token. The player
+	// needs to re-authenticate. Expected in normal operation.
+	ErrInvalidToken = errors.New("openplanet: token rejected")
+
+	// ErrUpstream: we could not get an answer out of Openplanet at all
+	// (unreachable, timed out, 5xx, unintelligible body). Nothing is known
+	// about the token, and the caller should retry later.
+	ErrUpstream = errors.New("openplanet: validation service unavailable")
+
+	// ErrMisconfigured: our own deployment is wrong, e.g. the plugin secret is
+	// missing. Not the player's problem and not Openplanet's.
+	ErrMisconfigured = errors.New("openplanet: server is misconfigured")
+)
+
 type OpenplanetUser struct {
 	AccountID   string `json:"account_id"`
 	DisplayName string `json:"display_name"`
@@ -27,10 +43,18 @@ type openplanetValidateRequest struct {
 	Secret string `json:"secret"`
 }
 
+// openplanetValidateResponse covers both shapes: a success carries account_id,
+// a rejection carries a human-readable error.
+type openplanetValidateResponse struct {
+	AccountID   string `json:"account_id"`
+	DisplayName string `json:"display_name"`
+	Error       string `json:"error"`
+}
+
 func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 	secret := config.Env.OpenplanetPluginSecret
 	if secret == "" {
-		return nil, fmt.Errorf("OPENPLANET_PLUGIN_SECRET is not set")
+		return nil, fmt.Errorf("%w: OPENPLANET_PLUGIN_SECRET is not set", ErrMisconfigured)
 	}
 
 	body, err := json.Marshal(openplanetValidateRequest{
@@ -38,7 +62,7 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 		Secret: secret,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, fmt.Errorf("%w: failed to marshal request: %v", ErrMisconfigured, err)
 	}
 
 	resp, err := openplanetClient.Post(
@@ -47,29 +71,59 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to contact Openplanet API: %w", err)
+		// Connection refused, DNS failure, TLS error, or the 10s client
+		// timeout. We never reached a verdict on the token.
+		return nil, fmt.Errorf("%w: failed to contact Openplanet API: %v", ErrUpstream, err)
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 64*1024)) // 64KB max
 	if err != nil {
-		return nil, fmt.Errorf("failed to read Openplanet response: %w", err)
+		return nil, fmt.Errorf("%w: failed to read Openplanet response: %v", ErrUpstream, err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openplanet validation failed (status %d): %s", resp.StatusCode, string(respBody))
+	switch {
+	case resp.StatusCode == http.StatusOK:
+		// Fall through to body inspection below.
+	case resp.StatusCode >= 500:
+		// Openplanet is broken or overloaded; the token is still unknown.
+		return nil, fmt.Errorf("%w: Openplanet returned status %d: %s",
+			ErrUpstream, resp.StatusCode, truncate(string(respBody), 200))
+	case resp.StatusCode >= 400:
+		// Openplanet actively refused the request.
+		return nil, fmt.Errorf("%w: Openplanet returned status %d: %s",
+			ErrInvalidToken, resp.StatusCode, truncate(string(respBody), 200))
+	default:
+		// 1xx/3xx
+		return nil, fmt.Errorf("%w: Openplanet returned unexpected status %d",
+			ErrUpstream, resp.StatusCode)
 	}
 
-	var user OpenplanetUser
-	if err := json.Unmarshal(respBody, &user); err != nil {
-		return nil, fmt.Errorf("failed to parse Openplanet response: %w", err)
+	var parsed openplanetValidateResponse
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		return nil, fmt.Errorf("%w: failed to parse Openplanet response: %v", ErrUpstream, err)
 	}
 
-	if user.AccountID == "" {
-		return nil, fmt.Errorf("openplanet returned empty account_id")
+	if parsed.Error != "" {
+		return nil, fmt.Errorf("%w: %s", ErrInvalidToken, truncate(parsed.Error, 200))
 	}
 
-	return &user, nil
+	if parsed.AccountID == "" {
+		return nil, fmt.Errorf("%w: Openplanet returned no account_id", ErrInvalidToken)
+	}
+
+	return &OpenplanetUser{
+		AccountID:   parsed.AccountID,
+		DisplayName: parsed.DisplayName,
+	}, nil
+}
+
+func truncate(s string, max int) string {
+	s = strings.TrimSpace(s)
+	if len(s) <= max {
+		return s
+	}
+	return s[:max] + "..."
 }
 
 func GetClientIP(r *http.Request) string {
