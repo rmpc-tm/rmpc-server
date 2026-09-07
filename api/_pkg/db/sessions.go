@@ -2,9 +2,11 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
 
 	"rmpc-server/db/.gen/rmpc/public/model"
@@ -54,7 +56,7 @@ func FindSessionByTokenHash(db *sql.DB, tokenHash string) (*Session, error) {
 	var dest model.Sessions
 	err := stmt.Query(db, &dest)
 	if err != nil {
-		if err.Error() == "jet: sql: no rows in result set" {
+		if errors.Is(err, qrm.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
