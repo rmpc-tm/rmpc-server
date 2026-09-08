@@ -24,13 +24,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := r.URL.Query().Get("name")
+	if !config.IsAllowedMetric(name) {
+		response.Error(w, http.StatusBadRequest, "metric name not allowed")
+		return
+	}
 
 	auth.RequireAuth(func(w http.ResponseWriter, r *http.Request, _ uuid.UUID) {
-		if !config.IsAllowedMetric(name) {
-			response.Error(w, http.StatusBadRequest, "metric name not allowed")
-			return
-		}
-
 		database, err := db.GetDB()
 		if err != nil {
 			slog.Error("database connection error", "error", err)

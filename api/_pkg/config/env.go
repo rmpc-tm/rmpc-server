@@ -25,7 +25,7 @@ var Env struct {
 	// SCORE_COOLDOWN - minimum time between score submissions per player, e.g. "1m"
 	ScoreCooldown time.Duration
 
-	// AUTH_RATE_LIMIT - max auth requests per IP per minute
+	// Max auth requests per IP per minute. Fixed, not read from the environment.
 	AuthRateLimit int
 
 	// LEADERBOARD_CACHE_TTL - how long Vercel edge may cache leaderboard responses, e.g. "5m"

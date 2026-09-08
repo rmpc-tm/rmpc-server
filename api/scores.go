@@ -24,6 +24,9 @@ type scoreSubmitRequest struct {
 	Metadata      json.RawMessage `json:"metadata,omitempty"`
 }
 
+// Highest number of completed maps a genuine run can reach.
+const maxMapsCompleted = 250
+
 type scoreSubmitResponse struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -54,11 +57,7 @@ func handleScoreSubmit(w http.ResponseWriter, r *http.Request, playerID uuid.UUI
 		return
 	}
 	if banned {
-		// Fake OK
-		response.JSON(w, http.StatusCreated, scoreSubmitResponse{
-			ID:        uuid.New().String(),
-			CreatedAt: time.Now(),
-		})
+		fakeAccept(w)
 		return
 	}
 
@@ -71,6 +70,13 @@ func handleScoreSubmit(w http.ResponseWriter, r *http.Request, playerID uuid.UUI
 	}
 	if err := validate.Struct(req); err != nil {
 		response.Error(w, http.StatusBadRequest, validate.FormatError(err))
+		return
+	}
+
+	if req.MapsCompleted > maxMapsCompleted {
+		slog.Warn("discarding implausible score",
+			"player_id", playerID, "maps_completed", req.MapsCompleted)
+		fakeAccept(w)
 		return
 	}
 
@@ -129,5 +135,13 @@ func handleScoreSubmit(w http.ResponseWriter, r *http.Request, playerID uuid.UUI
 	response.JSON(w, http.StatusCreated, scoreSubmitResponse{
 		ID:        id.String(),
 		CreatedAt: createdAt,
+	})
+}
+
+// fakeAccept answers as though the score was stored, without storing it.
+func fakeAccept(w http.ResponseWriter) {
+	response.JSON(w, http.StatusCreated, scoreSubmitResponse{
+		ID:        uuid.New().String(),
+		CreatedAt: time.Now(),
 	})
 }

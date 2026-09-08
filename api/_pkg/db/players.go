@@ -46,9 +46,12 @@ type PlayerDetail struct {
 	Scores       []PlayerScoreRow
 }
 
-// GetPlayerDetail returns a player and all their author/gold scores ordered
-// newest first. Returns (nil, nil) when the player doesn't exist, is banned,
-// or has no scores in these modes.
+// Most recent scores shown on a player page.
+const playerScoreLimit = 100
+
+// GetPlayerDetail returns a player and their most recent author/gold scores,
+// newest first, capped at playerScoreLimit. Returns (nil, nil) when the player
+// doesn't exist, is banned, or has no scores in these modes.
 func GetPlayerDetail(db *sql.DB, openplanetID string) (*PlayerDetail, error) {
 	stmt := SELECT(
 		table.Players.OpenplanetID,
@@ -70,7 +73,7 @@ func GetPlayerDetail(db *sql.DB, openplanetID string) (*PlayerDetail, error) {
 		table.Scores.Score.GT(Int(0)),
 	)).ORDER_BY(
 		table.Scores.CreatedAt.DESC(),
-	)
+	).LIMIT(playerScoreLimit)
 
 	var rows []struct {
 		OpenplanetID string `alias:"players.openplanet_id"`
