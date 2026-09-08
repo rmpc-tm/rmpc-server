@@ -19,17 +19,13 @@ var openplanetClient = &http.Client{
 }
 
 var (
-	// ErrInvalidToken: Openplanet answered and rejected the token. The player
-	// needs to re-authenticate. Expected in normal operation.
+	// ErrInvalidToken: Openplanet answered and rejected the token. Reauth.
 	ErrInvalidToken = errors.New("openplanet: token rejected")
 
-	// ErrUpstream: we could not get an answer out of Openplanet at all
-	// (unreachable, timed out, 5xx, unintelligible body). Nothing is known
-	// about the token, and the caller should retry later.
+	// ErrUpstream: we could not get an answer out of Openplanet at all. Retry.
 	ErrUpstream = errors.New("openplanet: validation service unavailable")
 
-	// ErrMisconfigured: our own deployment is wrong, e.g. the plugin secret is
-	// missing. Not the player's problem and not Openplanet's.
+	// ErrMisconfigured: internal.
 	ErrMisconfigured = errors.New("openplanet: server is misconfigured")
 )
 
@@ -71,9 +67,7 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		// Connection refused, DNS failure, TLS error, or the 10s client
-		// timeout. We never reached a verdict on the token.
-		return nil, fmt.Errorf("%w: failed to contact Openplanet API: %v", ErrUpstream, err)
+		return nil, fmt.Errorf("%w: failed to connect to Openplanet API: %v", ErrUpstream, err)
 	}
 	defer resp.Body.Close()
 
@@ -84,7 +78,7 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 
 	switch {
 	case resp.StatusCode == http.StatusOK:
-		// Fall through to body inspection below.
+		// continue
 	case resp.StatusCode >= 500:
 		// Openplanet is broken or overloaded; the token is still unknown.
 		return nil, fmt.Errorf("%w: Openplanet returned status %d: %s",

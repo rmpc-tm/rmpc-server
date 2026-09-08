@@ -14,10 +14,9 @@ type activityRow struct {
 	Count int64     `alias:"medals.total"`
 }
 
-// GetMedalActivity returns total maps completed per UTC day from since onwards,
-// keyed as YYYY-MM-DD; days with no activity are absent. since should be a UTC
-// midnight. Grouping and key formatting are both pinned to UTC, otherwise the
-// connection's TimeZone decides which day a score falls in.
+// GetMedalActivity returns total maps completed per UTC day from `since` onwards,
+// keyed as YYYY-MM-DD; days with no activity are absent. `since` should be a UTC
+// midnight. Grouping and key formatting are both pinned to UTC.
 func GetMedalActivity(db *sql.DB, since time.Time) (map[string]int64, error) {
 	bucket := DATE_TRUNC(DAY, table.Scores.CreatedAt, "UTC")
 

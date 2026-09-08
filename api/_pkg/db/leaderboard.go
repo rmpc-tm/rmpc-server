@@ -59,8 +59,7 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 		condition = condition.AND(table.Scores.CreatedAt.LT(TimestampzT(*params.EndTime)))
 	}
 
-	// Best score per player using DISTINCT ON; created_at makes the pick among
-	// equal scores deterministic rather than plan-dependent.
+	// Best score per player using DISTINCT ON; order by created_at for deterministic pick.
 	bestScores := SELECT(
 		table.Scores.PlayerID,
 		table.Scores.Score,

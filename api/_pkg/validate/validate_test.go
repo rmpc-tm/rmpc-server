@@ -5,10 +5,7 @@ import (
 	"testing"
 )
 
-// The validator names Go struct fields by default. This package rewires it to
-// report the JSON name instead, because the messages go straight back to API
-// clients, who never see the Go names. Dropping that wiring would leak
-// "GameMode" into responses for a field the caller sent as "game_mode".
+// The validator names Go struct fields by default. This package rewires it to report the JSON name instead.
 func TestFormatErrorUsesJSONFieldNames(t *testing.T) {
 	type request struct {
 		GameMode string `json:"game_mode" validate:"required"`

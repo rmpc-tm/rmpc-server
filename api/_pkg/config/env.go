@@ -84,12 +84,6 @@ func durationEnv(key string, fallback time.Duration) time.Duration {
 var validateOnce sync.Once
 
 // Validate logs each required environment variable that is missing.
-//
-// A serverless function cannot refuse to start, so one loud line per cold start
-// is the alternative to finding out from wrong behaviour. An unset
-// PLAYER_LINK_SECRET is the case that hides best: player links are signed with
-// an empty token, every player page answers 404, and the 404 is cached.
-//
 // Safe to call from any entrypoint; it logs at most once per process.
 func Validate() {
 	validateOnce.Do(func() {

@@ -15,8 +15,7 @@ import (
 	"rmpc-server/api/_pkg/validate"
 )
 
-// Every file under api/ is one Go package, so this runs once per cold start
-// whichever serverless entrypoint the request hit.
+// Runs once per cold start.
 func init() {
 	config.Validate()
 }

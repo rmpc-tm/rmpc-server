@@ -23,7 +23,6 @@ var (
 func loadMetrics() {
 	var cfg metricsConfig
 	if err := yaml.Unmarshal(metricsYAML, &cfg); err != nil {
-		// The data is compiled in, so this can only mean the checked-in YAML is malformed.
 		slog.Error("failed to parse embedded metrics.yaml", "error", err)
 		return
 	}

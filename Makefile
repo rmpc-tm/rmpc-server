@@ -10,10 +10,7 @@ JET_DSN ?= $(or $(DB_DSN),$(LOCAL_DSN))
 JET_BIN  = $(shell go env GOPATH)/bin/jet
 LINT_BIN = $(shell go env GOPATH)/bin/golangci-lint
 
-# The "..." wildcard skips any directory whose name starts with "_" or ".", so
-# ./... does not match anything under api/_pkg. Those packages have to be named
-# explicitly or they are never built, vetted, tested or linted. Discover them
-# rather than listing them, so a new package is picked up automatically.
+# Hacks to include `_paths` into `...`.
 MODULE        = $(shell go list -m)
 INTERNAL_PKGS = $(shell find api/_pkg -name '*.go' -exec dirname {} \; | sort -u | sed 's|^|$(MODULE)/|')
 PKGS          = ./... $(INTERNAL_PKGS)
