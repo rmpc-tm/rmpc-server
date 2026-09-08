@@ -59,7 +59,7 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 		condition = condition.AND(table.Scores.CreatedAt.LT(TimestampzT(*params.EndTime)))
 	}
 
-	// Best score per player using DISTINCT ON
+	// Best score per player using DISTINCT ON; order by created_at for deterministic pick.
 	bestScores := SELECT(
 		table.Scores.PlayerID,
 		table.Scores.Score,
@@ -81,6 +81,7 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 	).ORDER_BY(
 		table.Scores.PlayerID,
 		table.Scores.Score.DESC(),
+		table.Scores.CreatedAt.ASC(),
 	).AsTable("best_scores")
 
 	// Columns from the CTE
@@ -107,7 +108,10 @@ func GetLeaderboard(db *sql.DB, params LeaderboardParams) ([]LeaderboardEntry, e
 	).FROM(
 		bestScores,
 	).ORDER_BY(
+		// Ties go to whoever got there first, as the Hall of Fame ranks them.
 		bsScore.DESC(),
+		bsCreatedAt.ASC(),
+		bsPlayerID.ASC(),
 	).LIMIT(leaderboardLimit)
 
 	var entries []LeaderboardEntry

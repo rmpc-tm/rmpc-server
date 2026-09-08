@@ -24,6 +24,12 @@ type scoreSubmitRequest struct {
 	Metadata      json.RawMessage `json:"metadata,omitempty"`
 }
 
+// Plausibility ceilings for one run; score is a duration in ms.
+const (
+	maxMapsCompleted = 250
+	maxScoreMs       = 90 * 60 * 1000
+)
+
 type scoreSubmitResponse struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -54,11 +60,7 @@ func handleScoreSubmit(w http.ResponseWriter, r *http.Request, playerID uuid.UUI
 		return
 	}
 	if banned {
-		// Fake OK
-		response.JSON(w, http.StatusCreated, scoreSubmitResponse{
-			ID:        uuid.New().String(),
-			CreatedAt: time.Now(),
-		})
+		fakeAccept(w)
 		return
 	}
 
@@ -71,6 +73,16 @@ func handleScoreSubmit(w http.ResponseWriter, r *http.Request, playerID uuid.UUI
 	}
 	if err := validate.Struct(req); err != nil {
 		response.Error(w, http.StatusBadRequest, validate.FormatError(err))
+		return
+	}
+
+	// Discarded, not rejected, so a forged client gets nothing to tune against.
+	if req.MapsCompleted > maxMapsCompleted || req.Score > maxScoreMs {
+		slog.Warn("discarding implausible score",
+			"player_id", playerID,
+			"maps_completed", req.MapsCompleted,
+			"score", req.Score)
+		fakeAccept(w)
 		return
 	}
 
@@ -129,5 +141,14 @@ func handleScoreSubmit(w http.ResponseWriter, r *http.Request, playerID uuid.UUI
 	response.JSON(w, http.StatusCreated, scoreSubmitResponse{
 		ID:        id.String(),
 		CreatedAt: createdAt,
+	})
+}
+
+// fakeAccept answers as though the score was stored, without storing it.
+// Microseconds match what Postgres keeps; nanoseconds would give it away.
+func fakeAccept(w http.ResponseWriter) {
+	response.JSON(w, http.StatusCreated, scoreSubmitResponse{
+		ID:        uuid.New().String(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 	})
 }

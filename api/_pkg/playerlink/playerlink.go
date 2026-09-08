@@ -13,7 +13,7 @@ import (
 	"rmpc-server/api/_pkg/config"
 )
 
-// SigLen is the length of the truncated base64url HMAC (~96 bits — unforgeable, short).
+// SigLen is the length of the truncated base64url HMAC.
 const SigLen = 8
 
 func Sign(openplanetID string) string {

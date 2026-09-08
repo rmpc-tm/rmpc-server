@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -100,10 +99,6 @@ func Worldrecords(w http.ResponseWriter, r *http.Request) {
 	if v, ok := allTimeMap["gold"]; ok {
 		out.Gold = &v
 	}
-	if ttl := config.Env.WorldRecordsCacheTTL; ttl > 0 {
-		w.Header().Set("Cache-Control",
-			fmt.Sprintf("public, s-maxage=%d, stale-while-revalidate=60, stale-if-error=3600", int(ttl.Seconds())))
-	}
-
+	response.SetCache(w, config.Env.WorldRecordsCacheTTL)
 	response.JSON(w, http.StatusOK, out)
 }

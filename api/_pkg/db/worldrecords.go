@@ -14,7 +14,6 @@ type WorldRecord struct {
 	GameMode    string     `alias:"scores.game_mode"`
 	Score       int32      `alias:"scores.score"`
 	DisplayName string     `alias:"players.display_name"`
-	OpenplanetID string    `alias:"players.openplanet_id"`
 	CreatedAt   *time.Time `alias:"scores.created_at"`
 }
 
@@ -41,7 +40,6 @@ func GetWorldRecords(db *sql.DB, params WorldRecordParams) ([]WorldRecord, error
 		table.Scores.GameMode,
 		table.Scores.Score,
 		table.Players.DisplayName,
-		table.Players.OpenplanetID,
 		table.Scores.CreatedAt,
 	).DISTINCT(
 		table.Scores.GameMode,

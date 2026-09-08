@@ -1,7 +1,9 @@
 package config
 
 import (
+	"log/slog"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -23,7 +25,7 @@ var Env struct {
 	// SCORE_COOLDOWN - minimum time between score submissions per player, e.g. "1m"
 	ScoreCooldown time.Duration
 
-	// AUTH_RATE_LIMIT - max auth requests per IP per minute
+	// Max auth requests per IP per minute. Fixed, not read from the environment.
 	AuthRateLimit int
 
 	// LEADERBOARD_CACHE_TTL - how long Vercel edge may cache leaderboard responses, e.g. "5m"
@@ -77,4 +79,26 @@ func durationEnv(key string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return d
+}
+
+var validateOnce sync.Once
+
+// Validate logs each required environment variable that is missing.
+// Safe to call from any entrypoint; it logs at most once per process.
+func Validate() {
+	validateOnce.Do(func() {
+		required := []struct {
+			name  string
+			value string
+		}{
+			{"DATABASE_URL", Env.DatabaseURL},
+			{"OPENPLANET_PLUGIN_SECRET", Env.OpenplanetPluginSecret},
+			{"PLAYER_LINK_SECRET", Env.PlayerLinkSecret},
+		}
+		for _, v := range required {
+			if v.value == "" {
+				slog.Error("required environment variable is not set", "var", v.name)
+			}
+		}
+	})
 }

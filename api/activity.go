@@ -29,18 +29,17 @@ func Activity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lookup, err := db.GetMedalActivity(database, days)
+	// Anchor on UTC midnight so the buckets don't slide as the day advances.
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	start := today.AddDate(0, 0, -(days - 1))
+
+	lookup, err := db.GetMedalActivity(database, start)
 	if err != nil {
 		slog.Error("activity query error", "error", err)
 		response.Error(w, http.StatusServiceUnavailable, "service unavailable")
 		return
 	}
-
-	// Fill in all days in the range, ending on today (UTC). Anchor on midnight
-	// so the buckets don't slide as the wall clock advances within a day.
-	now := time.Now().UTC()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	start := today.AddDate(0, 0, -(days - 1))
 
 	medals := make([]int64, days)
 	for i := 0; i < days; i++ {

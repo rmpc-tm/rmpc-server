@@ -74,7 +74,7 @@ func HallOfFame(w http.ResponseWriter, r *http.Request) {
 	entries := make([]hofEntryJSON, len(rows))
 	for i, r := range rows {
 		entries[i] = hofEntryJSON{
-			Rank:   i + 1,
+			Rank: i + 1,
 			Player: hofPlayerJSON{
 				OpenplanetID: r.OpenplanetID,
 				DisplayName:  r.DisplayName,

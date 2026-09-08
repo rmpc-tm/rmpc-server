@@ -1,13 +1,15 @@
 package config
 
 import (
-	"os"
-	"path/filepath"
-	"runtime"
+	_ "embed"
+	"log/slog"
 	"sync"
 
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed metrics.yaml
+var metricsYAML []byte
 
 type metricsConfig struct {
 	AllowedMetrics []string `yaml:"allowed_metrics"`
@@ -16,22 +18,12 @@ type metricsConfig struct {
 var (
 	allowedMetrics map[string]bool
 	metricsOnce    sync.Once
-	metricsErr     error
 )
 
 func loadMetrics() {
-	_, filename, _, _ := runtime.Caller(0)
-	configPath := filepath.Join(filepath.Dir(filename), "..", "..", "..", "config", "metrics.yaml")
-
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		metricsErr = err
-		return
-	}
-
 	var cfg metricsConfig
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		metricsErr = err
+	if err := yaml.Unmarshal(metricsYAML, &cfg); err != nil {
+		slog.Error("failed to parse embedded metrics.yaml", "error", err)
 		return
 	}
 
@@ -39,12 +31,13 @@ func loadMetrics() {
 	for _, name := range cfg.AllowedMetrics {
 		allowedMetrics[name] = true
 	}
+
+	if len(allowedMetrics) == 0 {
+		slog.Error("embedded metrics.yaml contains no allowed_metrics; all metrics will be rejected")
+	}
 }
 
 func IsAllowedMetric(name string) bool {
 	metricsOnce.Do(loadMetrics)
-	if metricsErr != nil {
-		return false
-	}
 	return allowedMetrics[name]
 }
