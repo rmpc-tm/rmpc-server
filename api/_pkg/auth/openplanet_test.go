@@ -43,6 +43,10 @@ func TestValidateClassifiesUpstreamFailures(t *testing.T) {
 		{"200 but not JSON", http.StatusOK, "<html>captive portal</html>", ErrUpstream},
 		{"unexpected 302", http.StatusFound, "", ErrUpstream},
 
+		// Throttling is transient. Telling players to reauthenticate here
+		// would send them straight back into the same rate limit.
+		{"429 too many requests", http.StatusTooManyRequests, `{"error":"slow down"}`, ErrUpstream},
+
 		// Openplanet answered and refused.
 		{"400 bad request", http.StatusBadRequest, `{"error":"bad secret"}`, ErrInvalidToken},
 		{"401 unauthorized", http.StatusUnauthorized, `{"error":"invalid token"}`, ErrInvalidToken},
@@ -64,6 +68,10 @@ func TestValidateClassifiesUpstreamFailures(t *testing.T) {
 			}
 			if !errors.Is(err, tt.wantErr) {
 				t.Fatalf("got error %v, want it to match %v", err, tt.wantErr)
+			}
+			// Only a real rejection may send the player back to log in again.
+			if tt.wantErr != ErrInvalidToken && errors.Is(err, ErrInvalidToken) {
+				t.Fatalf("error %v must not be reported as an invalid token", err)
 			}
 		})
 	}

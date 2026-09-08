@@ -40,19 +40,34 @@ type PlayerScoreRow struct {
 	CreatedAt     *time.Time     `alias:"scores.created_at"`
 }
 
+// PlayerModeStats totals one game mode over every row GetPlayerDetail fetched.
+type PlayerModeStats struct {
+	Runs          int64
+	BestScore     int32
+	MapsCompleted int64
+	MapsSkipped   int64
+}
+
 type PlayerDetail struct {
 	OpenplanetID string
 	DisplayName  string
-	Scores       []PlayerScoreRow
+
+	Scores []PlayerScoreRow           // newest first, playerScoreLimit per mode
+	Stats  map[string]PlayerModeStats // by game mode, counted before the trim
 }
 
-// Most recent scores shown on a player page.
-const playerScoreLimit = 100
+const (
+	playerScoreLimit      = 100  // listed per mode
+	playerScoreRetention  = 18   // months
+	playerScoreFetchLimit = 1000 // rows read to total them
+)
 
-// GetPlayerDetail returns a player and their most recent author/gold scores,
-// newest first, capped at playerScoreLimit. Returns (nil, nil) when the player
-// doesn't exist, is banned, or has no scores in these modes.
+// GetPlayerDetail returns a player, their recent author/gold scores newest
+// first, and per-mode totals. Returns (nil, nil) when the player doesn't exist,
+// is banned, or has no scores in these modes.
 func GetPlayerDetail(db *sql.DB, openplanetID string) (*PlayerDetail, error) {
+	since := time.Now().UTC().AddDate(0, -playerScoreRetention, 0)
+
 	stmt := SELECT(
 		table.Players.OpenplanetID,
 		table.Players.DisplayName,
@@ -71,9 +86,10 @@ func GetPlayerDetail(db *sql.DB, openplanetID string) (*PlayerDetail, error) {
 		table.BannedPlayers.ID.IS_NULL(),
 		table.Scores.GameMode.IN(enum.GameMode.Author, enum.GameMode.Gold),
 		table.Scores.Score.GT(Int(0)),
+		table.Scores.CreatedAt.GT_EQ(TimestampzT(since)),
 	)).ORDER_BY(
 		table.Scores.CreatedAt.DESC(),
-	).LIMIT(playerScoreLimit)
+	).LIMIT(playerScoreFetchLimit)
 
 	var rows []struct {
 		OpenplanetID string `alias:"players.openplanet_id"`
@@ -90,10 +106,27 @@ func GetPlayerDetail(db *sql.DB, openplanetID string) (*PlayerDetail, error) {
 	detail := &PlayerDetail{
 		OpenplanetID: rows[0].OpenplanetID,
 		DisplayName:  rows[0].DisplayName,
-		Scores:       make([]PlayerScoreRow, len(rows)),
+		Stats:        make(map[string]PlayerModeStats, 2),
 	}
-	for i, r := range rows {
-		detail.Scores[i] = r.PlayerScoreRow
+
+	// Count first, trim second, so totals don't depend on the display cap.
+	kept := map[string]int{}
+	for _, r := range rows {
+		mode := r.GameMode.String()
+
+		st := detail.Stats[mode]
+		st.Runs++
+		st.MapsCompleted += int64(r.MapsCompleted)
+		st.MapsSkipped += int64(r.MapsSkipped)
+		if r.Score > st.BestScore {
+			st.BestScore = r.Score
+		}
+		detail.Stats[mode] = st
+
+		if kept[mode] < playerScoreLimit {
+			kept[mode]++
+			detail.Scores = append(detail.Scores, r.PlayerScoreRow)
+		}
 	}
 	return detail, nil
 }

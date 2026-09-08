@@ -490,15 +490,11 @@
 
     function computeModeStats(mode) {
         var stats = { runs: 0, best: 0, medals: 0, skips: 0 };
-        if (!mode || !mode.scores) return stats;
-        var scores = mode.scores;
-        stats.runs = scores.length;
-        for (var i = 0; i < scores.length; i++) {
-            var s = scores[i];
-            if (s.score > stats.best) stats.best = s.score;
-            stats.medals += s.maps_completed;
-            stats.skips += s.maps_skipped;
-        }
+        if (!mode || !mode.stats) return stats;
+        stats.runs = mode.stats.runs || 0;
+        stats.best = mode.stats.best || 0;
+        stats.medals = mode.stats.maps_completed || 0;
+        stats.skips = mode.stats.maps_skipped || 0;
         return stats;
     }
 
@@ -517,7 +513,11 @@
         }
         tbody.parentElement.style.display = "";
         empty.style.display = "none";
-        statsEl.textContent = stats.runs + " run" + (stats.runs === 1 ? "" : "s");
+
+        // mode.scores is capped; stats covers every run.
+        var shown = mode.scores.length;
+        statsEl.textContent = stats.runs + " run" + (stats.runs === 1 ? "" : "s")
+            + (shown < stats.runs ? " (latest " + shown + ")" : "");
 
         // Tag the top 3 runs (by score, ties broken by date order) so CSS can
         // show the same medal accents as the leaderboard podium.

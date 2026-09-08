@@ -25,9 +25,18 @@ type playerScoreJSON struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
+// Totals for the mode. Scores is trimmed, so clients must not re-derive these.
+type playerModeStatsJSON struct {
+	Runs          int64 `json:"runs"`
+	Best          int32 `json:"best"`
+	MapsCompleted int64 `json:"maps_completed"`
+	MapsSkipped   int64 `json:"maps_skipped"`
+}
+
 type playerModeJSON struct {
-	GameMode string            `json:"game_mode"`
-	Scores   []playerScoreJSON `json:"scores"`
+	GameMode string              `json:"game_mode"`
+	Stats    playerModeStatsJSON `json:"stats"`
+	Scores   []playerScoreJSON   `json:"scores"`
 }
 
 type playerHeaderJSON struct {
@@ -90,6 +99,18 @@ func buildPlayerResponse(d *db.PlayerDetail) playerResponse {
 	modes := map[string]*playerModeJSON{
 		"author": {GameMode: "author", Scores: []playerScoreJSON{}},
 		"gold":   {GameMode: "gold", Scores: []playerScoreJSON{}},
+	}
+	for mode, st := range d.Stats {
+		m, ok := modes[mode]
+		if !ok {
+			continue
+		}
+		m.Stats = playerModeStatsJSON{
+			Runs:          st.Runs,
+			Best:          st.BestScore,
+			MapsCompleted: st.MapsCompleted,
+			MapsSkipped:   st.MapsSkipped,
+		}
 	}
 	for _, s := range d.Scores {
 		m, ok := modes[s.GameMode.String()]

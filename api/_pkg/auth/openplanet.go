@@ -80,13 +80,14 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 	case resp.StatusCode == http.StatusOK:
 		// continue
 	case resp.StatusCode >= 500:
-		// Openplanet is broken or overloaded; the token is still unknown.
 		return nil, fmt.Errorf("%w: Openplanet returned status %d: %s",
-			ErrUpstream, resp.StatusCode, truncate(string(respBody), 200))
+			ErrUpstream, resp.StatusCode, preview(string(respBody)))
+	case resp.StatusCode == http.StatusTooManyRequests:
+		return nil, fmt.Errorf("%w: Openplanet returned status %d: %s",
+			ErrUpstream, resp.StatusCode, preview(string(respBody)))
 	case resp.StatusCode >= 400:
-		// Openplanet actively refused the request.
 		return nil, fmt.Errorf("%w: Openplanet returned status %d: %s",
-			ErrInvalidToken, resp.StatusCode, truncate(string(respBody), 200))
+			ErrInvalidToken, resp.StatusCode, preview(string(respBody)))
 	default:
 		// 1xx/3xx
 		return nil, fmt.Errorf("%w: Openplanet returned unexpected status %d",
@@ -99,7 +100,7 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 	}
 
 	if parsed.Error != "" {
-		return nil, fmt.Errorf("%w: %s", ErrInvalidToken, truncate(parsed.Error, 200))
+		return nil, fmt.Errorf("%w: %s", ErrInvalidToken, preview(parsed.Error))
 	}
 
 	if parsed.AccountID == "" {
@@ -112,12 +113,14 @@ func ValidateOpenplanetToken(token string) (*OpenplanetUser, error) {
 	}, nil
 }
 
-func truncate(s string, max int) string {
+// preview trims an upstream response down to something loggable.
+func preview(s string) string {
+	pLen := 120
 	s = strings.TrimSpace(s)
-	if len(s) <= max {
+	if len(s) <= pLen {
 		return s
 	}
-	return s[:max] + "..."
+	return s[:pLen] + "..."
 }
 
 func GetClientIP(r *http.Request) string {
