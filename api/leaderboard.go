@@ -13,7 +13,7 @@ import (
 )
 
 type leaderboardQuery struct {
-	GameMode string `json:"game_mode" validate:"omitempty,oneof=author gold"`
+	GameMode string `json:"game_mode" validate:"required,oneof=author gold"`
 	Month    string `json:"month"     validate:"omitempty"`
 }
 
@@ -41,9 +41,6 @@ type leaderboardEntryJSON struct {
 }
 
 func writeLeaderboardResponse(w http.ResponseWriter, scores []leaderboardEntryJSON, month, gameMode string) {
-	if gameMode == "" {
-		gameMode = "all"
-	}
 	response.SetCache(w, config.Env.LeaderboardCacheTTL)
 	response.JSON(w, http.StatusOK, leaderboardResponse{
 		Scores:   scores,

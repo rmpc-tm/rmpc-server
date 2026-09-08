@@ -142,6 +142,6 @@ func handleScoreSubmit(w http.ResponseWriter, r *http.Request, playerID uuid.UUI
 func fakeAccept(w http.ResponseWriter) {
 	response.JSON(w, http.StatusCreated, scoreSubmitResponse{
 		ID:        uuid.New().String(),
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
 	})
 }
