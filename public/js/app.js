@@ -456,9 +456,9 @@
             '<rect x="7.2" y="4" width="17.6" height="2.2" rx="1" fill="url(#' + id + '-v)"/>' +
             '<path d="M10.6 7.2Q10.6 13.3 13.6 16.4" stroke="#FFF" stroke-opacity=".55" stroke-width="1" fill="none" stroke-linecap="round"/>' +
             // engraved rank number
-            '<g text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-weight="700" font-size="7">' +
-                '<text x="16" y="14.6" fill="#FFF" fill-opacity=".25">' + n + "</text>" +
-                '<text x="16" y="14.3" fill="' + c[3] + '" fill-opacity=".4">' + n + "</text>" +
+            '<g text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-weight="700" font-size="10">' +
+                '<text x="16" y="15.7" fill="#FFF" fill-opacity=".25">' + n + "</text>" +
+                '<text x="16" y="15.4" fill="' + c[3] + '" fill-opacity=".5">' + n + "</text>" +
             "</g>" +
             // collar, plinth, plaque
             '<rect x="12.4" y="21.8" width="7.2" height="2" rx=".6" fill="url(#' + id + '-h)"/>' +
