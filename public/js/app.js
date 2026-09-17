@@ -180,7 +180,7 @@
         var curY = now.getUTCFullYear();
         var curM = now.getUTCMonth() + 1;
         // Current month first, then previous months back to Dec 2025
-        months.push({ key: "current", label: formatMonthLabel(curY, curM), current: true });
+        months.push({ key: "current", label: formatMonthLabel(curY, curM) });
         var y = curY;
         var m = curM - 1;
         if (m === 0) { m = 12; y--; }
@@ -199,11 +199,7 @@
         for (var i = 0; i < months.length; i++) {
             var btn = document.createElement("button");
             btn.setAttribute("data-month", months[i].key);
-            if (months[i].current) {
-                btn.innerHTML = escapeHtml(months[i].label) + ' <span class="month-tag">Current</span>';
-            } else {
-                btn.textContent = months[i].label;
-            }
+            btn.textContent = months[i].label;
             els.archiveDropdown.appendChild(btn);
         }
     }
