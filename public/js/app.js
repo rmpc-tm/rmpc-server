@@ -409,9 +409,9 @@
         for (var i = 0; i < entries.length; i++) {
             var e = entries[i];
             var trophies =
-                repeat("🥇", e.gold) +   // 🥇
-                repeat("🥈", e.silver) + // 🥈
-                repeat("🥉", e.bronze);  // 🥉
+                repeat(trophyIcon("gold"), e.gold) +
+                repeat(trophyIcon("silver"), e.silver) +
+                repeat(trophyIcon("bronze"), e.bronze);
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + e.rank + "</td>" +
@@ -419,6 +419,64 @@
                 '<td class="col-trophies">' + trophies + "</td>";
             els.hofBody.appendChild(tr);
         }
+    }
+
+    // Trophy icons are <use> references into a sprite injected once, so each
+    // tier's gradients are defined a single time.
+    var TROPHY_TIERS = {
+        // highlight, base tone, shade, deep shade
+        gold:   { rank: 1, label: "Gold",   colors: ["#FFF4B8", "#F2C230", "#B7860E", "#6E4F05"] },
+        silver: { rank: 2, label: "Silver", colors: ["#FFFFFF", "#D3D9DF", "#939CA6", "#545B63"] },
+        bronze: { rank: 3, label: "Bronze", colors: ["#FFD8B0", "#D48A48", "#95582A", "#55301A"] }
+    };
+
+    function trophySymbol(tier) {
+        var c = TROPHY_TIERS[tier].colors;
+        var n = TROPHY_TIERS[tier].rank;
+        var id = "trophy-" + tier;
+        return '<symbol id="' + id + '" viewBox="0 0 32 32">' +
+            '<linearGradient id="' + id + '-h" x1="0" x2="1" y1="0" y2="0">' +
+                '<stop offset="0" stop-color="' + c[2] + '"/><stop offset=".3" stop-color="' + c[0] + '"/>' +
+                '<stop offset=".55" stop-color="' + c[1] + '"/><stop offset="1" stop-color="' + c[3] + '"/>' +
+            "</linearGradient>" +
+            '<linearGradient id="' + id + '-v" x1="0" x2="0" y1="0" y2="1">' +
+                '<stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[2] + '"/>' +
+            "</linearGradient>" +
+            '<linearGradient id="' + id + '-base" x1="0" x2="0" y1="0" y2="1">' +
+                '<stop offset="0" stop-color="#6A5344"/><stop offset="1" stop-color="#2E211B"/>' +
+            "</linearGradient>" +
+            // handles
+            '<g fill="none" stroke="url(#' + id + '-v)" stroke-width="2" stroke-linecap="round">' +
+                '<path d="M8.5 7.5H6Q4.2 7.5 4.2 9.6Q4.4 13.6 10.5 15.8"/>' +
+                '<path d="M23.5 7.5H26Q27.8 7.5 27.8 9.6Q27.6 13.6 21.5 15.8"/>' +
+            "</g>" +
+            // stem, cup, rim, shine
+            '<path d="M14.6 18.5H17.4L17 22.3H15Z" fill="url(#' + id + '-h)"/>' +
+            '<path d="M7.8 5.2H24.2V9.5Q24.2 17.2 16 19.4Q7.8 17.2 7.8 9.5Z" fill="url(#' + id + '-h)"/>' +
+            '<rect x="7.2" y="4" width="17.6" height="2.2" rx="1" fill="url(#' + id + '-v)"/>' +
+            '<path d="M10.6 7.2Q10.6 13.3 13.6 16.4" stroke="#FFF" stroke-opacity=".55" stroke-width="1" fill="none" stroke-linecap="round"/>' +
+            // engraved rank number
+            '<g text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-weight="700" font-size="10">' +
+                '<text x="16" y="15.7" fill="#FFF" fill-opacity=".25">' + n + "</text>" +
+                '<text x="16" y="15.4" fill="' + c[3] + '" fill-opacity=".5">' + n + "</text>" +
+            "</g>" +
+            // collar, plinth, plaque
+            '<rect x="12.4" y="21.8" width="7.2" height="2" rx=".6" fill="url(#' + id + '-h)"/>' +
+            '<rect x="9.4" y="23.6" width="13.2" height="5.8" rx=".9" fill="url(#' + id + '-base)"/>' +
+            '<rect x="9.9" y="23.6" width="12.2" height=".6" rx=".3" fill="#FFF" fill-opacity=".22"/>' +
+            '<rect x="12.6" y="25.2" width="6.8" height="2.4" rx=".4" fill="url(#' + id + '-h)"/>' +
+            "</symbol>";
+    }
+
+    function injectTrophySprite() {
+        var holder = document.createElement("div");
+        holder.innerHTML = '<svg class="trophy-sprite" aria-hidden="true">' +
+            trophySymbol("gold") + trophySymbol("silver") + trophySymbol("bronze") + "</svg>";
+        document.body.appendChild(holder.firstChild);
+    }
+
+    function trophyIcon(tier) {
+        return '<svg class="trophy" role="img" aria-label="' + TROPHY_TIERS[tier].label + '"><use href="#trophy-' + tier + '"/></svg>';
     }
 
     function repeat(s, n) {
@@ -710,6 +768,7 @@
     window.addEventListener("hashchange", applyHash);
 
     // Init
+    injectTrophySprite();
     populateArchiveDropdown();
     applyHash();
 })();
