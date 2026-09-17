@@ -409,9 +409,9 @@
         for (var i = 0; i < entries.length; i++) {
             var e = entries[i];
             var trophies =
-                trophySpan("gold", e.gold) +
-                trophySpan("silver", e.silver) +
-                trophySpan("bronze", e.bronze);
+                repeat("🥇", e.gold) +   // 🥇
+                repeat("🥈", e.silver) + // 🥈
+                repeat("🥉", e.bronze);  // 🥉
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + e.rank + "</td>" +
@@ -419,11 +419,6 @@
                 '<td class="col-trophies">' + trophies + "</td>";
             els.hofBody.appendChild(tr);
         }
-    }
-
-    function trophySpan(tier, n) {
-        if (n <= 0) return "";
-        return '<span class="trophy-' + tier + '">' + repeat("\uD83C\uDFC6", n) + "</span>";
     }
 
     function repeat(s, n) {
