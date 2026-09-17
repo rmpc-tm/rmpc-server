@@ -59,7 +59,7 @@
             <div class="control-group">
                 <label>Leaderboards</label>
                 <div class="toggle-group" id="period-toggle">
-                    <button class="toggle-btn active" data-value="all">All Time</button>
+                    <button class="toggle-btn" data-value="all">All Time</button>
                     <button class="toggle-btn archive-btn" data-value="archive" id="archive-btn"><span class="archive-label">Month</span><svg class="archive-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
                 </div>
                 <div class="archive-dropdown" id="archive-dropdown"></div>
@@ -69,6 +69,12 @@
         <p id="hof-description" class="hof-description" style="display: none;">
             Top three players each completed month earn gold, silver, and bronze trophies. Ties broken by best score.
         </p>
+
+        <div id="board-title" class="board-title">
+            <h2 id="board-title-text"></h2>
+            <span id="board-title-tag" class="board-title-tag">Live</span>
+            <span id="board-title-mode" class="board-title-mode"></span>
+        </div>
 
         <div id="loading" class="loading" style="display: none;">
             <div class="loading-spinner"></div>

@@ -21,6 +21,7 @@
     --accent-glow: rgba(232, 96, 138, 0.15);
     --error: #E86060;
     --error-bg: rgba(232, 96, 96, 0.08);
+    --live: #E83030;
     --rank-gold: #E0C850;
     --rank-silver: #B0A8B0;
     --rank-bronze: #C89060;
@@ -370,7 +371,7 @@ main {
     max-height: 220px;
     overflow-y: auto;
     z-index: 10;
-    min-width: 140px;
+    min-width: 110px;
 }
 
 .archive-dropdown.open {
@@ -403,22 +404,6 @@ main {
 .archive-dropdown button.selected {
     background: var(--toggle-active-bg);
     color: var(--toggle-active-text);
-}
-
-.archive-dropdown .month-tag {
-    margin-left: 0.4rem;
-    padding: 0 0.3rem;
-    font-size: 0.55rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-strong);
-    border-radius: 2px;
-}
-
-.archive-dropdown button.selected .month-tag {
-    color: var(--toggle-active-text);
-    border-color: var(--toggle-active-text);
 }
 
 /* ---------- Table ---------- */
@@ -902,6 +887,45 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
     font-size: 0.7rem;
     color: var(--text-secondary);
     line-height: 1.5;
+}
+
+/* ---------- Leaderboard title ---------- */
+.board-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin: 1.25rem 0 0.5rem;
+}
+
+.board-title h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--heading);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.board-title-tag {
+    padding: 0 0.3rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--live);
+    border: 1px solid var(--live);
+    border-radius: 2px;
+    align-self: center;
+}
+
+.board-title-mode {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
 }
 
 /* ---------- Hall of Fame table ---------- */
