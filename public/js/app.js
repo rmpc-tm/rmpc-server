@@ -174,6 +174,14 @@
         return MONTH_NAMES[m - 1] + " " + y;
     }
 
+    // "2026-01" -> "January 2026"; unparsable keys pass through.
+    function formatFullMonth(key) {
+        var parts = String(key).split("-");
+        var m = parseInt(parts[1], 10);
+        if (!parts[0] || !m || m < 1 || m > 12) return String(key);
+        return FULL_MONTH_NAMES[m - 1] + " " + parts[0];
+    }
+
     function generateArchiveMonths() {
         var months = [];
         var now = new Date();
@@ -479,19 +487,12 @@
     function trophyIcons(tier, months) {
         var out = "";
         for (var i = 0; i < (months || []).length; i++) {
-            var label = TROPHY_TIERS[tier].label + " — " + formatFullMonth(months[i]);
+            var label = formatFullMonth(months[i]) + " (" + tier + ")";
             out += '<svg class="trophy" role="img" aria-label="' + escapeHtml(label) + '">' +
                 "<title>" + escapeHtml(label) + "</title>" +
                 '<use href="#trophy-' + tier + '"/></svg>';
         }
         return out;
-    }
-
-    function formatFullMonth(key) {
-        var parts = String(key).split("-");
-        var m = parseInt(parts[1], 10);
-        if (!parts[0] || !m || m < 1 || m > 12) return String(key);
-        return FULL_MONTH_NAMES[m - 1] + " " + parts[0];
     }
 
     // --- Player detail ---
@@ -659,10 +660,9 @@
             setActiveToggle("archive");
             var monthKey = state.month === "current" ? getCurrentMonth() : state.month;
             var parts = monthKey.split("-");
-            var y = parseInt(parts[0], 10);
-            var m = parseInt(parts[1], 10);
-            els.archiveBtn.querySelector(".archive-label").textContent = formatMonthLabel(y, m);
-            els.boardTitleText.textContent = FULL_MONTH_NAMES[m - 1] + " " + y;
+            els.archiveBtn.querySelector(".archive-label").textContent =
+                formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
+            els.boardTitleText.textContent = formatFullMonth(monthKey);
         }
     }
 
