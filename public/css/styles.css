@@ -21,6 +21,7 @@
     --accent-glow: rgba(232, 96, 138, 0.15);
     --error: #E86060;
     --error-bg: rgba(232, 96, 96, 0.08);
+    --live: #E83030;
     --rank-gold: #E0C850;
     --rank-silver: #B0A8B0;
     --rank-bronze: #C89060;
@@ -912,8 +913,8 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
     font-size: 0.55rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--accent);
-    border: 1px solid var(--accent);
+    color: var(--live);
+    border: 1px solid var(--live);
     border-radius: 2px;
     align-self: center;
 }
