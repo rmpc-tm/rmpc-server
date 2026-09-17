@@ -4,8 +4,6 @@
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap');
-/* Hall of Fame medals only. Kept separate because `text` subsets every family in the URL. */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&text=%F0%9F%A5%87%F0%9F%A5%88%F0%9F%A5%89&display=swap');
 
 /* ---------- Theme tokens ---------- */
 :root {
@@ -938,11 +936,23 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
 
 .hof-table tbody .col-trophies {
     padding-left: 0.6rem;
-    font-family: 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
-    font-size: 1.1rem;
     line-height: 1;
-    letter-spacing: 0.05em;
     white-space: normal;
+}
+
+.trophy {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.1rem;
+    vertical-align: middle;
+}
+
+/* Hidden without display:none, which would disable the gradients it defines. */
+.trophy-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
 }
 
 .hof-table .col-player {
