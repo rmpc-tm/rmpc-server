@@ -174,6 +174,14 @@
         return MONTH_NAMES[m - 1] + " " + y;
     }
 
+    // "2026-01" -> "January 2026"; unparsable keys pass through.
+    function formatFullMonth(key) {
+        var parts = String(key).split("-");
+        var m = parseInt(parts[1], 10);
+        if (!parts[0] || !m || m < 1 || m > 12) return String(key);
+        return FULL_MONTH_NAMES[m - 1] + " " + parts[0];
+    }
+
     function generateArchiveMonths() {
         var months = [];
         var now = new Date();
@@ -409,9 +417,9 @@
         for (var i = 0; i < entries.length; i++) {
             var e = entries[i];
             var trophies =
-                repeat(trophyIcon("gold"), e.gold) +
-                repeat(trophyIcon("silver"), e.silver) +
-                repeat(trophyIcon("bronze"), e.bronze);
+                trophyIcons("gold", e.gold) +
+                trophyIcons("silver", e.silver) +
+                trophyIcons("bronze", e.bronze);
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + e.rank + "</td>" +
@@ -475,13 +483,15 @@
         document.body.appendChild(holder.firstChild);
     }
 
-    function trophyIcon(tier) {
-        return '<svg class="trophy" role="img" aria-label="' + TROPHY_TIERS[tier].label + '"><use href="#trophy-' + tier + '"/></svg>';
-    }
-
-    function repeat(s, n) {
+    // months: ["2026-01", ...], one per trophy won in that tier.
+    function trophyIcons(tier, months) {
         var out = "";
-        for (var i = 0; i < n; i++) out += s;
+        for (var i = 0; i < (months || []).length; i++) {
+            var label = formatFullMonth(months[i]) + " (" + tier + ")";
+            out += '<svg class="trophy" role="img" aria-label="' + escapeHtml(label) + '">' +
+                "<title>" + escapeHtml(label) + "</title>" +
+                '<use href="#trophy-' + tier + '"/></svg>';
+        }
         return out;
     }
 
@@ -650,10 +660,9 @@
             setActiveToggle("archive");
             var monthKey = state.month === "current" ? getCurrentMonth() : state.month;
             var parts = monthKey.split("-");
-            var y = parseInt(parts[0], 10);
-            var m = parseInt(parts[1], 10);
-            els.archiveBtn.querySelector(".archive-label").textContent = formatMonthLabel(y, m);
-            els.boardTitleText.textContent = FULL_MONTH_NAMES[m - 1] + " " + y;
+            els.archiveBtn.querySelector(".archive-label").textContent =
+                formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
+            els.boardTitleText.textContent = formatFullMonth(monthKey);
         }
     }
 
