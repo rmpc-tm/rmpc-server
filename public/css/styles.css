@@ -904,6 +904,45 @@ tbody tr:nth-child(n+11) { animation-delay: 0.15s; }
     line-height: 1.5;
 }
 
+/* ---------- Leaderboard title ---------- */
+.board-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin: 1.25rem 0 0.5rem;
+}
+
+.board-title h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--heading);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.board-title-tag {
+    padding: 0 0.3rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    align-self: center;
+}
+
+.board-title-mode {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+}
+
 /* ---------- Hall of Fame table ---------- */
 .hof-table .col-trophies {
     width: 100%;

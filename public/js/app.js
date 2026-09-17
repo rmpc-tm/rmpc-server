@@ -2,11 +2,11 @@
     "use strict";
 
     // view: "main" = leaderboard/HoF, "player" = single-player detail
-    // month: "" = all time, "current" = this month, "YYYY-MM" = archive, "hof" = hall of fame
+    // month: "all" = all time, "current" = this month, "YYYY-MM" = archive, "hof" = hall of fame
     var state = {
         view: "main",
         gameMode: "author",
-        month: "",
+        month: "current",
         playerID: "",
         playerSig: ""
     };
@@ -36,6 +36,10 @@
         hofBody: document.getElementById("hof-body"),
         hofEmpty: document.getElementById("hof-empty"),
         hofDescription: document.getElementById("hof-description"),
+        boardTitle: document.getElementById("board-title"),
+        boardTitleText: document.getElementById("board-title-text"),
+        boardTitleTag: document.getElementById("board-title-tag"),
+        boardTitleMode: document.getElementById("board-title-mode"),
         playerLoading: document.getElementById("player-loading"),
         playerError: document.getElementById("player-error"),
         playerContent: document.getElementById("player-content"),
@@ -163,6 +167,8 @@
 
     var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    var FULL_MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December"];
 
     function formatMonthLabel(y, m) {
         return MONTH_NAMES[m - 1] + " " + y;
@@ -203,6 +209,7 @@
     }
 
     function resolveMonth() {
+        if (state.month === "all") return "";
         if (state.month === "current") return getCurrentMonth();
         return state.month;
     }
@@ -228,6 +235,7 @@
         }
         closePlayerModal();
         els.hofDescription.style.display = state.month === "hof" ? "" : "none";
+        els.boardTitle.style.display = state.month === "hof" ? "none" : "";
         if (state.month === "hof") {
             fetchHallOfFame();
         } else {
@@ -574,10 +582,13 @@
             modeBtns[i].classList.toggle("active", modeBtns[i].getAttribute("data-value") === state.gameMode);
         }
 
-        // Period toggles + archive label
-        if (state.month === "") {
+        // Period toggles + archive label + board title
+        els.boardTitleMode.textContent = state.gameMode === "gold" ? "Gold" : "Author";
+        els.boardTitleTag.style.display = state.month === "current" ? "" : "none";
+        if (state.month === "all") {
             setActiveToggle("all");
             resetArchiveLabel();
+            els.boardTitleText.textContent = "All Time";
         } else if (state.month === "hof") {
             setActiveToggle("hof");
             resetArchiveLabel();
@@ -585,7 +596,10 @@
             setActiveToggle("archive");
             var monthKey = state.month === "current" ? getCurrentMonth() : state.month;
             var parts = monthKey.split("-");
-            els.archiveBtn.querySelector(".archive-label").textContent = formatMonthLabel(parseInt(parts[0], 10), parseInt(parts[1], 10));
+            var y = parseInt(parts[0], 10);
+            var m = parseInt(parts[1], 10);
+            els.archiveBtn.querySelector(".archive-label").textContent = formatMonthLabel(y, m);
+            els.boardTitleText.textContent = FULL_MONTH_NAMES[m - 1] + " " + y;
         }
     }
 
@@ -602,7 +616,7 @@
             state.view = "main";
             if (!hash) {
                 state.gameMode = "author";
-                state.month = "";
+                state.month = "current";
             } else {
                 var mode = segments[0];
                 if (mode === "author" || mode === "gold") {
@@ -610,7 +624,7 @@
                 } else {
                     state.gameMode = "author";
                 }
-                state.month = segments[1] || "";
+                state.month = segments[1] || "current";
             }
         }
         syncUI();
@@ -646,7 +660,7 @@
         if (btn.classList.contains("active")) return;
 
         if (value === "all") {
-            state.month = "";
+            state.month = "all";
         } else if (value === "hof") {
             state.month = "hof";
         }
