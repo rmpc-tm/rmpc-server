@@ -409,9 +409,9 @@
         for (var i = 0; i < entries.length; i++) {
             var e = entries[i];
             var trophies =
-                repeat(trophyIcon("gold"), e.gold) +
-                repeat(trophyIcon("silver"), e.silver) +
-                repeat(trophyIcon("bronze"), e.bronze);
+                trophyIcons("gold", e.gold) +
+                trophyIcons("silver", e.silver) +
+                trophyIcons("bronze", e.bronze);
             var tr = document.createElement("tr");
             tr.innerHTML =
                 '<td class="col-rank">' + e.rank + "</td>" +
@@ -475,14 +475,23 @@
         document.body.appendChild(holder.firstChild);
     }
 
-    function trophyIcon(tier) {
-        return '<svg class="trophy" role="img" aria-label="' + TROPHY_TIERS[tier].label + '"><use href="#trophy-' + tier + '"/></svg>';
+    // months: ["2026-01", ...], one per trophy won in that tier.
+    function trophyIcons(tier, months) {
+        var out = "";
+        for (var i = 0; i < (months || []).length; i++) {
+            var label = TROPHY_TIERS[tier].label + " — " + formatFullMonth(months[i]);
+            out += '<svg class="trophy" role="img" aria-label="' + escapeHtml(label) + '">' +
+                "<title>" + escapeHtml(label) + "</title>" +
+                '<use href="#trophy-' + tier + '"/></svg>';
+        }
+        return out;
     }
 
-    function repeat(s, n) {
-        var out = "";
-        for (var i = 0; i < n; i++) out += s;
-        return out;
+    function formatFullMonth(key) {
+        var parts = String(key).split("-");
+        var m = parseInt(parts[1], 10);
+        if (!parts[0] || !m || m < 1 || m > 12) return String(key);
+        return FULL_MONTH_NAMES[m - 1] + " " + parts[0];
     }
 
     // --- Player detail ---

@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	. "github.com/go-jet/jet/v2/postgres"
@@ -11,18 +13,28 @@ import (
 )
 
 type HallOfFameRow struct {
-	OpenplanetID string `alias:"players.openplanet_id"`
-	DisplayName  string `alias:"players.display_name"`
-	Gold         int    `alias:"trophies.gold"`
-	Silver       int    `alias:"trophies.silver"`
-	Bronze       int    `alias:"trophies.bronze"`
+	OpenplanetID string
+	DisplayName  string
+	// Months a trophy of each tier was won, oldest first.
+	Gold   []time.Time
+	Silver []time.Time
+	Bronze []time.Time
+}
+
+// One month a player finished on the podium.
+type hofPodiumRow struct {
+	OpenplanetID string    `alias:"players.openplanet_id"`
+	DisplayName  string    `alias:"players.display_name"`
+	Month        time.Time `alias:"podium.month"`
+	Place        int       `alias:"podium.rn"`
+	BestScore    int32     `alias:"podium.best_score"`
 }
 
 // GetHallOfFame returns players ranked by trophy count for a single game mode
 // within [earliest, before). For each month it awards gold/silver/bronze to
-// the top 3 best-per-player scores, then aggregates per player. Rows arrive
-// pre-sorted by (gold, silver, bronze, best_score, name) — best_score is the
-// player's career best within the period, used to break trophy-count ties.
+// the top 3 best-per-player scores, then aggregates per player. Rows are
+// sorted by (gold, silver, bronze, best_score, name) — best_score is the
+// player's best within the period, used to break trophy-count ties.
 //
 // Banned players are excluded. gameMode must be "author" or "gold".
 func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]HallOfFameRow, error) {
@@ -44,6 +56,7 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 	monthly := SELECT(
 		table.Players.OpenplanetID,
 		table.Players.DisplayName,
+		month.AS("month"),
 		MAX(table.Scores.Score).AS("best_score"),
 		rn.AS("rn"),
 	).FROM(
@@ -64,39 +77,79 @@ func GetHallOfFame(db *sql.DB, gameMode string, earliest, before time.Time) ([]H
 
 	mOpenplanetID := table.Players.OpenplanetID.From(monthly)
 	mDisplayName := table.Players.DisplayName.From(monthly)
+	mMonth := TimestampzColumn("month").From(monthly)
 	mBestScore := IntegerColumn("best_score").From(monthly)
 	mRN := IntegerColumn("rn").From(monthly)
 
-	// Tally trophies. COUNT ignores NULLs, so the CASE returns 1 for matches
-	// and NULL (no ELSE) otherwise — equivalent to COUNT(*) FILTER (WHERE rn = N),
-	// which jet doesn't expose.
-	gold := COUNT(CASE().WHEN(mRN.EQ(Int(1))).THEN(Int(1)))
-	silver := COUNT(CASE().WHEN(mRN.EQ(Int(2))).THEN(Int(1)))
-	bronze := COUNT(CASE().WHEN(mRN.EQ(Int(3))).THEN(Int(1)))
-	playerBest := MAX(mBestScore)
-
+	// One row per podium month; the tally per player happens in Go so each
+	// trophy keeps the month it was won in.
 	stmt := SELECT(
 		mOpenplanetID,
 		mDisplayName,
-		gold.AS("trophies.gold"),
-		silver.AS("trophies.silver"),
-		bronze.AS("trophies.bronze"),
+		mMonth.AS("podium.month"),
+		mRN.AS("podium.rn"),
+		mBestScore.AS("podium.best_score"),
 	).FROM(monthly).WHERE(
 		mRN.LT_EQ(Int(3)),
-	).GROUP_BY(
-		mOpenplanetID,
-		mDisplayName,
 	).ORDER_BY(
-		gold.DESC(),
-		silver.DESC(),
-		bronze.DESC(),
-		playerBest.DESC(),
-		LOWER(mDisplayName).ASC(),
+		mMonth.ASC(),
 	)
 
-	var entries []HallOfFameRow
-	if err := stmt.Query(db, &entries); err != nil {
+	var podium []hofPodiumRow
+	if err := stmt.Query(db, &podium); err != nil {
 		return nil, err
 	}
-	return entries, nil
+	return rankHallOfFame(podium), nil
+}
+
+// rankHallOfFame collapses podium months into one row per player, sorted by
+// (gold, silver, bronze, best_score, name). Podium rows must be ordered by
+// month so each tier's months stay oldest first.
+func rankHallOfFame(podium []hofPodiumRow) []HallOfFameRow {
+	byPlayer := make(map[string]*HallOfFameRow)
+	best := make(map[string]int32)
+	order := make([]string, 0, len(podium))
+
+	for _, p := range podium {
+		row, ok := byPlayer[p.OpenplanetID]
+		if !ok {
+			row = &HallOfFameRow{OpenplanetID: p.OpenplanetID, DisplayName: p.DisplayName}
+			byPlayer[p.OpenplanetID] = row
+			order = append(order, p.OpenplanetID)
+		}
+		switch p.Place {
+		case 1:
+			row.Gold = append(row.Gold, p.Month)
+		case 2:
+			row.Silver = append(row.Silver, p.Month)
+		case 3:
+			row.Bronze = append(row.Bronze, p.Month)
+		}
+		if p.BestScore > best[p.OpenplanetID] {
+			best[p.OpenplanetID] = p.BestScore
+		}
+	}
+
+	entries := make([]HallOfFameRow, 0, len(order))
+	for _, id := range order {
+		entries = append(entries, *byPlayer[id])
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		a, b := entries[i], entries[j]
+		for _, c := range [][2]int{
+			{len(a.Gold), len(b.Gold)},
+			{len(a.Silver), len(b.Silver)},
+			{len(a.Bronze), len(b.Bronze)},
+		} {
+			if c[0] != c[1] {
+				return c[0] > c[1]
+			}
+		}
+		if best[a.OpenplanetID] != best[b.OpenplanetID] {
+			return best[a.OpenplanetID] > best[b.OpenplanetID]
+		}
+		return strings.ToLower(a.DisplayName) < strings.ToLower(b.DisplayName)
+	})
+	return entries
 }

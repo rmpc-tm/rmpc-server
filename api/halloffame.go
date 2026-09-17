@@ -22,13 +22,23 @@ type hofPlayerJSON struct {
 	Token        string `json:"t"`
 }
 
+// Each tier carries the months it was won in ("2026-01"), oldest first; the
+// counts are their lengths.
 type hofEntryJSON struct {
 	Rank   int           `json:"rank"`
 	Player hofPlayerJSON `json:"player"`
-	Gold   int           `json:"gold"`
-	Silver int           `json:"silver"`
-	Bronze int           `json:"bronze"`
+	Gold   []string      `json:"gold"`
+	Silver []string      `json:"silver"`
+	Bronze []string      `json:"bronze"`
 	Total  int           `json:"total"`
+}
+
+func hofMonths(months []time.Time) []string {
+	out := make([]string, len(months))
+	for i, m := range months {
+		out[i] = m.UTC().Format("2006-01")
+	}
+	return out
 }
 
 type hofResponse struct {
@@ -80,10 +90,10 @@ func HallOfFame(w http.ResponseWriter, r *http.Request) {
 				DisplayName:  r.DisplayName,
 				Token:        playerlink.Sign(r.OpenplanetID),
 			},
-			Gold:   r.Gold,
-			Silver: r.Silver,
-			Bronze: r.Bronze,
-			Total:  r.Gold + r.Silver + r.Bronze,
+			Gold:   hofMonths(r.Gold),
+			Silver: hofMonths(r.Silver),
+			Bronze: hofMonths(r.Bronze),
+			Total:  len(r.Gold) + len(r.Silver) + len(r.Bronze),
 		}
 	}
 
